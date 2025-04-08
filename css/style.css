@@ -1,7 +1,7 @@
-/* frontend/css/style.css - v3.5 Light Theme Adjustments (Corrected) + Navbar Responsivo */
+/* frontend/css/style.css - v3.6 Navbar Fixa + Ajustes Padding */
 /* MODIFICADO: Adicionadas variáveis e estilos para Dark Mode */
 /* MODIFICADO: Cor de fundo da lista de materiais agora usa variável */
-/* MODIFICADO: Padding mobile nav corrigido */
+/* MODIFICADO: Navbar agora é position: fixed, padding do body ajustado */
 
 /*-------------------------*\
   #VARIÁVEIS GLOBAIS (Light & Dark Themes)
@@ -111,8 +111,9 @@ body {
   color: var(--color-text-primary);
   background: radial-gradient(ellipse at center, var(--color-background) 50%, var(--color-background-edge) 100%);
   min-height: 100vh;
+  /* *** MUDANÇA: Adiciona padding-top global para compensar header fixo *** */
   padding-top: var(--header-height-mobile);
-  padding-bottom: 80px;
+  padding-bottom: 80px; /* Espaço para o footer fixo */
   transition: background-color var(--transition-speed) ease, color var(--transition-speed) ease;
 }
 
@@ -124,8 +125,15 @@ body {
   color: var(--color-text-on-primary-bg);
   padding: 0 var(--spacing-md);
   box-shadow: var(--box-shadow);
-  position: sticky; top: 0; left: 0; right: 0; z-index: 100;
-  min-height: var(--header-height-mobile); display: flex; align-items: center; justify-content: center;
+  /* *** MUDANÇA: position: fixed para fixar no topo *** */
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  width: 100%; /* Garante largura total quando fixo */
+  z-index: 100;
+  min-height: var(--header-height-mobile);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .header-content {
   display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 1200px; height: var(--header-height-mobile);
@@ -168,7 +176,8 @@ html[data-theme="dark"] .main-navigation button:hover {
 # ESTILOS MOBILE (Media Query - Usa variáveis)
 \*-------------------------*/
 @media (max-width: 768px) {
-  body { padding-top: var(--header-height-mobile); }
+  /* *** MUDANÇA: Removido padding-top do body aqui, agora é global *** */
+  /* body { padding-top: var(--header-height-mobile); } */
   .main-header { min-height: var(--header-height-mobile); justify-content: initial; padding: 0 var(--spacing-md); }
   .header-content { height: var(--header-height-mobile); justify-content: space-between; margin: 0; max-width: none; }
   .main-header h1 { font-size: 1.1rem; }
@@ -183,7 +192,7 @@ html[data-theme="dark"] .main-navigation button:hover {
   .main-navigation.mobile-menu-open { display: flex; }
   .main-navigation button {
       width: 100%; text-align: left;
-      padding: var(--spacing-sm) var(--spacing-lg); /* Padding Corrigido */
+      padding: var(--spacing-sm) var(--spacing-lg); /* Padding ok */
       font-size: 1rem;
       border-bottom: 1px solid var(--color-border-light);
       border-radius: 0; background-color: transparent;
@@ -205,10 +214,12 @@ html[data-theme="dark"] .main-navigation button:hover {
 
 /* Ajustes para Desktop (Usa variáveis) */
 @media (min-width: 769px) {
-   body { padding-top: 0; }
+   /* *** MUDANÇA: Ajusta o padding-top do body para a altura do header de desktop *** */
+  body { padding-top: var(--header-height-desktop); }
   .main-header { display: flex; align-items: center; justify-content: center; padding: 0 var(--spacing-md); min-height: var(--header-height-desktop); }
   .header-content { height: var(--header-height-desktop); justify-content: flex-start; gap: var(--spacing-lg); }
   .main-header h1 { font-size: 1.25rem; text-align: left; }
+  /* A navegação no desktop continua relativa ao header (que agora é fixo) */
   .main-navigation { display: flex !important; position: static; background-color: transparent; box-shadow: none; border-top: none; padding: 0; flex-direction: row; width: auto; margin-left: var(--spacing-lg); }
   .main-navigation button { width: auto; text-align: center; padding: var(--spacing-xs) var(--spacing-md); font-size: 0.9rem; border-bottom: 3px solid transparent; border-radius: var(--border-radius); background-color: transparent; color: var(--color-text-on-primary-bg); }
   .main-navigation button:last-child { border-bottom: 3px solid transparent; }
