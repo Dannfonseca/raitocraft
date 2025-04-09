@@ -21,11 +21,13 @@ const elements = {
     editModalMaterialsContainer: 'edit-modal-materials-container', // Container de materiais DENTRO do modal
     editModalAddMaterialButton: 'edit-modal-add-material-button', // Botão Adicionar Material DENTRO do modal
     editModalCancelButton: 'edit-modal-cancel-button',   // Botão Cancelar DENTRO do modal
-    editModalStatus: 'edit-modal-status'         // Status DENTRO do modal
+    editModalStatus: 'edit-modal-status',         // Status DENTRO do modal
+    editItemSearch: 'edit-item-search'           // Input de pesquisa
 };
 
 // Mapeamento dos elementos do DOM (será preenchido em init)
 let domElements = {};
+let allItems = []; // Armazena todos os itens carregados para filtragem
 
 /**
  * Inicializa a view de edição (lista de itens) e configura listeners para o modal.
@@ -85,6 +87,10 @@ export function initEditView() {
         domElements.editModalCloseButton.addEventListener('click', hideEditModal);
     }
 
+    // Adiciona listener para o campo de pesquisa
+    if (domElements.editItemSearch) {
+        domElements.editItemSearch.addEventListener('input', () => filterItems(domElements.editItemSearch.value));
+    }
 
     // Carrega a lista de itens para a PÁGINA principal
     loadItemsForEditing();
@@ -103,7 +109,8 @@ async function loadItemsForEditing() {
 
     try {
         const items = await api.fetchItems();
-        renderEditList(items);
+        allItems = items; // Armazena todos os itens carregados
+        filterItems(domElements.editItemSearch.value); // Filtra inicialmente
         if (domElements.editLoadingMsg) domElements.editLoadingMsg.style.display = 'none';
         if (items.length === 0) {
              if(domElements.editStatus) ui.showStatusMessage(elements.editStatus, "Nenhum item registrado ainda.", "info");
@@ -292,4 +299,18 @@ async function handleDelete(itemId, itemName) {
         console.error(`Erro ao deletar item ${itemId}:`, error);
         ui.showStatusMessage(elements.editStatus, `Erro ao deletar: ${error.message || 'Erro.'}`, "error");
     }
+}
+
+/**
+ * Filtra a lista de itens exibida na view de edição.
+ * @param {string} searchTerm - O termo de pesquisa.
+ */
+function filterItems(searchTerm) {
+    if (!allItems || !domElements.editListContainer) return;
+
+    const filteredItems = searchTerm
+        ? allItems.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
+        : [...allItems]; // Copia para não modificar o original
+
+    renderEditList(filteredItems);
 }

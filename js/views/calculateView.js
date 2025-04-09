@@ -34,11 +34,13 @@ const elements = { /* ... (ids iguais ao anterior) ... */
     modalProfitPerProfMatValue: 'modal-result-profit-per-prof-mat',
     profMatNameSpan: '.prof-mat-name',
     modalStatus: 'modal-status',
-    calculateStatus: 'calculate-status'
+    calculateStatus: 'calculate-status',
+    calculateItemSearch: 'calculate-item-search' // Input de pesquisa
 };
 
 let domElements = {};
 let currentRecipeData = null;
+let allItems = []; // Armazena todos os itens carregados para filtragem
 
 // --- validateAndUpdateLotInputs, initCalculateView, loadItemsForEditing, renderCalculateItemList, prepareAndOpenCalculateModal ---
 // --- Funções sem modificações significativas aqui (já incluem validação visual de 3 estados) ---
@@ -82,12 +84,19 @@ export function initCalculateView() {
         domElements.modalMaterialsList._eventListenerInput = inputHandler;
         console.log("[calculateView] Listeners do modal re-anexados.");
     } catch(e) { console.error("[calculateView] Erro ao gerenciar listeners do modal:", e); /* Fallback listeners... */ }
+
+    // Adiciona listener para o campo de pesquisa
+    if (domElements.calculateItemSearch) {
+        domElements.calculateItemSearch.addEventListener('input', () => filterItems(domElements.calculateItemSearch.value));
+    }
+
     loadItemsForEditing();
 }
 async function loadItemsForEditing() {
     if (domElements.calculateLoadingMsg) domElements.calculateLoadingMsg.style.display = 'block'; if (domElements.calculateItemList) domElements.calculateItemList.innerHTML = ''; ui.hideStatusMessage(elements.calculateStatus);
     try {
-        const items = await api.fetchItems(); renderCalculateItemList(items);
+        const items = await api.fetchItems(); allItems = items; // Armazena todos os itens carregados
+        filterItems(domElements.calculateItemSearch.value); // Filtra inicialmente
         if (domElements.calculateLoadingMsg) domElements.calculateLoadingMsg.style.display = 'none'; if (!items || items.length === 0) { ui.showStatusMessage(elements.calculateStatus, "Nenhum item registrado.", "info"); }
     } catch (error) { console.error("Erro ao carregar itens:", error); if (domElements.calculateLoadingMsg) domElements.calculateLoadingMsg.textContent = 'Erro.'; ui.showStatusMessage(elements.calculateStatus, `Erro: ${error.message || 'Verifique console.'}`, "error"); }
 }
@@ -371,4 +380,18 @@ function displayModalResults(cost, profits, packsCalculated) {
         profMatValueSpan.textContent = profitPerMatText; profMatValueSpan.style.color = profitPerMatColor; profMatLine.style.display = 'block';
     } else if (profMatLine) { profMatLine.style.display = 'none'; }
     if (domElements.modalResultsDiv) domElements.modalResultsDiv.style.display = 'block';
+}
+
+/**
+ * Filtra a lista de itens exibida na view de cálculo.
+ * @param {string} searchTerm - O termo de pesquisa.
+ */
+function filterItems(searchTerm) {
+    if (!allItems || !domElements.calculateItemList) return;
+
+    const filteredItems = searchTerm
+        ? allItems.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
+        : [...allItems]; // Copia para não modificar o original
+
+    renderCalculateItemList(filteredItems);
 }

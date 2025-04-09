@@ -51,8 +51,8 @@ export function addMaterialInput(container, materialData = {}) {
     nameInput.type = 'text';
     nameInput.name = 'material_name';
     nameInput.id = nameLabel.htmlFor;
-    nameInput.value = materialData.material_name || ''; // Preenche se editando, senão vazio
-    nameInput.placeholder = "Nome do Material"; // Adiciona placeholder
+    nameInput.value = materialData.material_name || '';
+    nameInput.placeholder = "Nome do Material";
     nameInput.required = true;
     nameDiv.append(nameLabel, nameInput);
 
@@ -65,9 +65,8 @@ export function addMaterialInput(container, materialData = {}) {
     quantityInput.type = 'number';
     quantityInput.name = 'quantity';
     quantityInput.id = quantityLabel.htmlFor;
-    // Define valor se editando, senão deixa vazio para mostrar placeholder
     quantityInput.value = materialData.quantity || '';
-    quantityInput.placeholder = "1"; // Placeholder indicando valor comum
+    quantityInput.placeholder = "1";
     quantityInput.min = '1';
     quantityInput.required = true;
     quantityDiv.append(quantityLabel, quantityInput);
@@ -81,14 +80,9 @@ export function addMaterialInput(container, materialData = {}) {
     typeSelect.name = 'material_type';
     typeSelect.id = typeLabel.htmlFor;
     typeSelect.required = true;
-    // Adiciona opção vazia inicial (opcional, mas bom para usabilidade)
-    // const defaultOption = document.createElement('option');
-    // defaultOption.value = "";
-    // defaultOption.textContent = "-- Selecione --";
-    // defaultOption.disabled = true;
-    // defaultOption.selected = !materialData.material_type; // Seleciona se não houver tipo pré-definido
-    // typeSelect.appendChild(defaultOption);
-    ['profession', 'drop', 'buy'].forEach(type => {
+
+    // Invert the order of 'buy' and 'profession' and remove 'drop'
+    ['buy', 'profession'].forEach(type => {
         const option = document.createElement('option');
         option.value = type;
         option.textContent = type.charAt(0).toUpperCase() + type.slice(1);
@@ -99,7 +93,7 @@ export function addMaterialInput(container, materialData = {}) {
 
     // Input Preço NPC (visível condicionalmente)
     const npcPriceDiv = document.createElement('div');
-    npcPriceDiv.className = 'npc-price-field-container'; // Adiciona classe para controle
+    npcPriceDiv.className = 'npc-price-field-container';
     const npcLabel = document.createElement('label');
     npcLabel.textContent = 'Preço NPC (Ref):';
     npcLabel.htmlFor = `mat-npc-${idSuffix}`;
@@ -107,9 +101,8 @@ export function addMaterialInput(container, materialData = {}) {
     npcInput.type = 'number';
     npcInput.name = 'default_npc_price';
     npcInput.id = npcLabel.htmlFor;
-    // Define valor se editando, senão deixa vazio para mostrar placeholder
     npcInput.value = materialData.default_npc_price || '';
-    npcInput.placeholder = "0"; // Placeholder
+    npcInput.placeholder = "0";
     npcInput.min = '0';
     npcPriceDiv.append(npcLabel, npcInput);
 
@@ -123,7 +116,7 @@ export function addMaterialInput(container, materialData = {}) {
     const removeButton = document.createElement('button');
     removeButton.type = 'button';
     removeButton.textContent = 'Remover';
-    removeButton.className = 'button button-danger remove-material-button'; // Adiciona classe específica
+    removeButton.className = 'button button-danger remove-material-button';
     removeButton.onclick = () => entryDiv.remove();
     removeButtonDiv.appendChild(removeButton);
 
@@ -134,7 +127,7 @@ export function addMaterialInput(container, materialData = {}) {
     entryDiv.appendChild(removeButtonDiv);
 
     container.appendChild(entryDiv);
-    toggleNpcPriceVisibility(); // Chama para definir visibilidade inicial
+    toggleNpcPriceVisibility();
 }
 
 /**

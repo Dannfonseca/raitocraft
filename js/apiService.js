@@ -23,6 +23,8 @@ async function handleResponse(response) {
     return data;
 }
 
+
+
 /**
  * Busca a lista de todos os itens craftáveis (id, nome, preço npc).
  * @returns {Promise<Array<{id: number, name: string, npc_sell_price: number}>>}
