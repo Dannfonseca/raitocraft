@@ -1,6 +1,8 @@
-// craftraito/frontend/js/views/calculateView.js
+// frontend/js/views/calculateView.js
 // ATUALIZADO: Adiciona botão "+ Custo" para itens de profissão, revelando input opcional.
 // Coleta custos de profissão em handleModalConfirm e passa para calculateCraftingCost.
+// Pré-preenche o primeiro par de inputs (preço/qtd) com a quantidade base e preço NPC.
+// <<< NOVA ALTERAÇÃO >>>: Atualiza automaticamente o valor do PRIMEIRO input de quantidade ao mudar os packs.
 import * as api from '../apiService.js';
 import * as ui from '../ui.js';
 import * as calculator from '../calculator.js';
@@ -72,17 +74,35 @@ export function initCalculateView() {
     if (missingElement) { console.error(`[calculateView] ERRO FATAL: Elemento não encontrado: #${elements[missingElement]}`); if(domElements.calculateStatus) { ui.showStatusMessage(elements.calculateStatus, `Erro: Falha ao carregar UI (${elements[missingElement]}).`, "error"); } return; }
     console.log("[calculateView] Todos elementos essenciais encontrados.");
     try {
+        // Remove e re-adiciona listeners para evitar duplicação
         const oldClose = domElements.modalCloseButton; const newClose = oldClose.cloneNode(true); oldClose.parentNode.replaceChild(newClose, oldClose); domElements.modalCloseButton = newClose;
         const oldConfirm = domElements.modalConfirmButton; const newConfirm = oldConfirm.cloneNode(true); oldConfirm.parentNode.replaceChild(newConfirm, oldConfirm); domElements.modalConfirmButton = newConfirm;
         const oldQtyInput = domElements.modalCraftQuantityInput; const newQtyInput = oldQtyInput.cloneNode(true); oldQtyInput.parentNode.replaceChild(newQtyInput, oldQtyInput); domElements.modalCraftQuantityInput = newQtyInput;
-        if (domElements.modalMaterialsList._eventListenerInput) { domElements.modalMaterialsList.removeEventListener('input', domElements.modalMaterialsList._eventListenerInput); domElements.modalMaterialsList._eventListenerInput = null; }
+
+        // Remove listener antigo da lista ANTES de adicionar o novo
+        if (domElements.modalMaterialsList && typeof domElements.modalMaterialsList._eventListenerInput === 'function') {
+             domElements.modalMaterialsList.removeEventListener('input', domElements.modalMaterialsList._eventListenerInput);
+             domElements.modalMaterialsList._eventListenerInput = null; // Limpa a referência
+             console.log("[calculateView] Listener 'input' da lista de materiais removido.");
+        }
+
+        // Adiciona os listeners atualizados
         domElements.modalCloseButton.addEventListener('click', closeCalculationModal);
         domElements.modalConfirmButton.addEventListener('click', handleModalConfirm);
-        domElements.modalCraftQuantityInput.addEventListener('input', updateDynamicModalValues);
-        const inputHandler = (event) => { if (event.target.classList.contains('market-qty-input')) { const li = event.target.closest('li'); if (li) validateAndUpdateLotInputs(li); }};
+        domElements.modalCraftQuantityInput.addEventListener('input', updateDynamicModalValues); // Este chama a atualização
+
+        // Novo listener para a lista (delegado)
+        const inputHandler = (event) => {
+             // Valida quando quantidade OU preço de um lote muda
+             if (event.target.classList.contains('market-qty-input') || event.target.classList.contains('market-price-input')) {
+                 const li = event.target.closest('li');
+                 if (li) validateAndUpdateLotInputs(li);
+             }
+        };
         domElements.modalMaterialsList.addEventListener('input', inputHandler);
-        domElements.modalMaterialsList._eventListenerInput = inputHandler;
+        domElements.modalMaterialsList._eventListenerInput = inputHandler; // Guarda referência para remover depois
         console.log("[calculateView] Listeners do modal re-anexados.");
+
     } catch(e) { console.error("[calculateView] Erro ao gerenciar listeners do modal:", e); /* Fallback listeners... */ }
 
     // Adiciona listener para o campo de pesquisa
@@ -118,105 +138,167 @@ async function prepareAndOpenCalculateModal(itemId) {
 
 /**
  * Adiciona um par de inputs de Preço/Quantidade para um material no modal.
- * (Função sem modificação aqui)
+ * Modificado para aceitar e usar initialQty e initialPrice.
+ * @param {HTMLElement} container O elemento onde adicionar o par.
+ * @param {string} materialName O nome do material associado.
+ * @param {boolean} [isFirstPair=false] Se é o primeiro par adicionado para este material.
+ * @param {number} [initialQty=1] Quantidade inicial para pré-preencher (usado se isFirstPair).
+ * @param {number} [initialPrice=0] Preço inicial para pré-preencher (usado se isFirstPair).
  */
-function addPriceQtyPair(container, materialName, isFirstPair = false) {
-    const liParent = container.closest('li'); const pairDiv = document.createElement('div'); pairDiv.className = 'price-qty-pair';
-    const priceInput = document.createElement('input'); priceInput.type = 'number'; priceInput.className = 'market-price-input'; priceInput.placeholder = 'Preço'; priceInput.min = '0'; priceInput.value = '0'; priceInput.dataset.materialName = materialName;
-    const qtyInput = document.createElement('input'); qtyInput.type = 'number'; qtyInput.className = 'market-qty-input'; qtyInput.placeholder = 'Qtd'; qtyInput.min = '1'; qtyInput.value = '1'; qtyInput.dataset.materialName = materialName;
-    pairDiv.appendChild(priceInput); pairDiv.appendChild(qtyInput);
+function addPriceQtyPair(container, materialName, isFirstPair = false, initialQty = 1, initialPrice = 0) {
+    const liParent = container.closest('li'); // Pega o <li> pai para revalidar depois
+    const pairDiv = document.createElement('div');
+    pairDiv.className = 'price-qty-pair';
+
+    // Input de Preço
+    const priceInput = document.createElement('input');
+    priceInput.type = 'number';
+    priceInput.className = 'market-price-input';
+    priceInput.placeholder = 'Preço';
+    priceInput.min = '0';
+    priceInput.dataset.materialName = materialName;
+    // Define o valor inicial baseado se é o primeiro par ou não
+    priceInput.value = isFirstPair ? (initialPrice || 0) : '0';
+
+    // Input de Quantidade
+    const qtyInput = document.createElement('input');
+    qtyInput.type = 'number';
+    qtyInput.className = 'market-qty-input';
+    qtyInput.placeholder = 'Qtd';
+    qtyInput.min = '1'; // Quantidade mínima geralmente é 1
+    qtyInput.dataset.materialName = materialName;
+    // Define o valor inicial baseado se é o primeiro par ou não
+    qtyInput.value = isFirstPair ? (initialQty || 1) : '1';
+
+    pairDiv.appendChild(priceInput);
+    pairDiv.appendChild(qtyInput);
+
+    // Adiciona botão de remover apenas se NÃO for o primeiro par
     if (!isFirstPair) {
-        const removePairButton = document.createElement('button'); removePairButton.type = 'button'; removePairButton.textContent = 'X'; removePairButton.className = 'button button-danger remove-pair-button'; removePairButton.title = 'Remover este par';
-        removePairButton.addEventListener('click', () => { const liForValidation = removePairButton.closest('li'); pairDiv.remove(); if (liForValidation) validateAndUpdateLotInputs(liForValidation); });
+        const removePairButton = document.createElement('button');
+        removePairButton.type = 'button';
+        removePairButton.textContent = 'X';
+        removePairButton.className = 'button button-danger remove-pair-button';
+        removePairButton.title = 'Remover este lote';
+        removePairButton.addEventListener('click', () => {
+            const liForValidation = removePairButton.closest('li');
+            pairDiv.remove();
+            // Revalida os inputs restantes no <li> após remover um par
+            if (liForValidation) {
+                validateAndUpdateLotInputs(liForValidation);
+            }
+        });
         pairDiv.appendChild(removePairButton);
     }
-    container.appendChild(pairDiv); if (liParent) validateAndUpdateLotInputs(liParent);
+
+    container.appendChild(pairDiv);
+
+    // Chama a validação DEPOIS de adicionar o par e definir os valores iniciais
+    // Isso garante que o estado visual (verde/amarelo/vermelho) seja aplicado corretamente no início.
+    if (liParent) {
+        validateAndUpdateLotInputs(liParent);
+    }
 }
 
 
 /**
  * Abre e preenche o modal de cálculo.
- * MODIFICADO: Adiciona botão "+ Custo" e área oculta para itens de profissão.
+ * Passa quantidade base e preço NPC para addPriceQtyPair no primeiro par.
  */
 function openCalculationModal() {
     if (!currentRecipeData) { ui.showStatusMessage(elements.calculateStatus, "Dados da receita não disponíveis.", "error"); return; }
     domElements.modalItemNameSpan.textContent = currentRecipeData.name;
-    domElements.modalCraftQuantityInput.value = 1;
+    domElements.modalCraftQuantityInput.value = 1; // Sempre começa com 1 pack
     domElements.modalMaterialsList.innerHTML = '';
 
     currentRecipeData.materials.forEach(mat => {
         const li = document.createElement('li');
         li.dataset.materialName = mat.material_name;
         li.dataset.baseQuantity = mat.quantity;
+        // Inicializa totalNeeded para 1 pack (será atualizado dinamicamente)
+        li.dataset.totalNeeded = mat.quantity * 1;
 
         const nameSpan = document.createElement('span');
         nameSpan.className = 'material-name-display material-quantity-display';
-        nameSpan.textContent = `...x ${mat.material_name}`; // Placeholder
-        li.appendChild(nameSpan); // Adiciona o span principal
+        // O texto será definido em updateDynamicModalValues
+        nameSpan.textContent = `...x ${mat.material_name}`;
+        li.appendChild(nameSpan);
 
-        // *** MUDANÇA: Lógica diferente para profissão ***
         if (mat.material_type === 'profession') {
-            nameSpan.textContent += ` (Profissão)`; // Atualiza o texto do span principal
+            nameSpan.textContent += ` (Profissão)`; // Identifica item de profissão
 
-            // Botão para mostrar/esconder área de custo
+            // Botão e área de custo de profissão (semelhante à versão anterior)
             const toggleCostButton = document.createElement('button');
             toggleCostButton.type = 'button';
             toggleCostButton.textContent = '+ Custo';
-            toggleCostButton.className = 'button button-secondary button-xsmall add-prof-cost-button'; // Usar classe CSS
+            toggleCostButton.className = 'button button-secondary button-xsmall add-prof-cost-button';
             toggleCostButton.title = 'Adicionar custo unitário para este item';
-            li.appendChild(toggleCostButton); // Adiciona o botão ao lado do span
+            li.appendChild(toggleCostButton);
 
-            // Container para o input de custo (começa oculto)
             const costArea = document.createElement('div');
-            costArea.className = 'profession-cost-area'; // Classe para CSS
-            costArea.style.display = 'none'; // Começa oculto
+            costArea.className = 'profession-cost-area';
+            costArea.style.display = 'none';
 
             const costLabel = document.createElement('label');
             costLabel.textContent = 'Custo Unitário:';
-            const inputId = `prof-cost-${mat.material_name.replace(/\s+/g, '-')}-${Date.now()}`; // ID único
+            const inputId = `prof-cost-${mat.material_name.replace(/\s+/g, '-')}-${Date.now()}`;
             costLabel.htmlFor = inputId;
 
             const costInput = document.createElement('input');
             costInput.type = 'number';
             costInput.min = '0';
             costInput.value = '0';
-            costInput.className = 'profession-cost-input'; // Classe para coletar valor
-            costInput.dataset.materialName = mat.material_name; // Linkar ao material
+            costInput.className = 'profession-cost-input';
+            costInput.dataset.materialName = mat.material_name;
             costInput.id = inputId;
             costInput.placeholder = '0';
 
             costArea.appendChild(costLabel);
             costArea.appendChild(costInput);
-            li.appendChild(costArea); // Adiciona a área oculta ao li
+            li.appendChild(costArea);
 
-            // Event listener para o botão toggle
             toggleCostButton.addEventListener('click', () => {
                 const isHidden = costArea.style.display === 'none';
-                if (isHidden) {
-                    costArea.style.display = 'flex'; // Mostra (usando flex definido no CSS)
-                    toggleCostButton.textContent = '- Custo';
-                    toggleCostButton.title = 'Remover custo unitário';
-                } else {
-                    costArea.style.display = 'none'; // Esconde
-                    toggleCostButton.textContent = '+ Custo';
-                     toggleCostButton.title = 'Adicionar custo unitário para este item';
-                    costInput.value = '0'; // Reseta o valor ao esconder
-                }
+                costArea.style.display = isHidden ? 'flex' : 'none';
+                toggleCostButton.textContent = isHidden ? '- Custo' : '+ Custo';
+                toggleCostButton.title = isHidden ? 'Remover custo unitário' : 'Adicionar custo unitário para este item';
+                if (!isHidden) costInput.value = '0'; // Reseta se esconder
             });
 
-        } else { // Lógica para 'drop' ou 'buy' (igual anterior)
+        } else { // Lógica para 'drop' ou 'buy'
             const npcPriceFormatted = calculator.formatCurrency(mat.default_npc_price || 0);
-            const npcRefSpan = document.createElement('span'); npcRefSpan.className = 'material-npc-ref'; npcRefSpan.textContent = ` (NPC Ref: ${npcPriceFormatted})`; li.appendChild(npcRefSpan);
-            const pairsContainer = document.createElement('div'); pairsContainer.className = 'price-qty-pairs-container'; li.appendChild(pairsContainer); addPriceQtyPair(pairsContainer, mat.material_name, true);
-            const addPairButton = document.createElement('button'); addPairButton.type = 'button'; addPairButton.textContent = '+ Lote'; addPairButton.className = 'button button-secondary add-pair-button'; addPairButton.title = 'Adicionar lote';
-            addPairButton.addEventListener('click', () => { addPriceQtyPair(pairsContainer, mat.material_name, false); }); li.appendChild(addPairButton);
+            const npcRefSpan = document.createElement('span');
+            npcRefSpan.className = 'material-npc-ref';
+            npcRefSpan.textContent = ` (NPC Ref: ${npcPriceFormatted})`;
+            li.appendChild(npcRefSpan);
+
+            const pairsContainer = document.createElement('div');
+            pairsContainer.className = 'price-qty-pairs-container';
+            li.appendChild(pairsContainer);
+
+            // Passa a quantidade base e o preço NPC para o PRIMEIRO par
+            const initialQtyNeeded = mat.quantity; // Quantidade para 1 pack
+            const initialNpcPrice = mat.default_npc_price || 0;
+            addPriceQtyPair(pairsContainer, mat.material_name, true, initialQtyNeeded, initialNpcPrice);
+
+            // Botão para adicionar MAIS lotes (estes virão sem preenchimento automático)
+            const addPairButton = document.createElement('button');
+            addPairButton.type = 'button';
+            addPairButton.textContent = '+ Lote';
+            addPairButton.className = 'button button-secondary add-pair-button';
+            addPairButton.title = 'Adicionar outro lote deste material';
+            addPairButton.addEventListener('click', () => {
+                // Chama sem os valores iniciais, pegando os defaults (Qty 1, Price 0)
+                addPriceQtyPair(pairsContainer, mat.material_name, false);
+            });
+            li.appendChild(addPairButton);
         }
         domElements.modalMaterialsList.appendChild(li);
     });
 
     domElements.modalSellPriceNpcBaseSpan.textContent = calculator.formatCurrency(currentRecipeData.npc_sell_price || 0);
     domElements.modalSellPriceMarketInput.value = '0';
-    updateDynamicModalValues(); // Define valores iniciais e validação
+    updateDynamicModalValues(); // Chama para definir textos, quantidades e validação inicial
     domElements.modalResultsDiv.style.display = 'none';
     ui.hideStatusMessage(elements.modalStatus);
     domElements.calculationModal.style.display = 'flex';
@@ -229,47 +311,79 @@ function closeCalculationModal() {
 }
 
 
-// --- updateDynamicModalValues (sem mudanças aqui) ---
+/**
+ * Atualiza os valores dinâmicos no modal (total de itens, quantidades de material, preço NPC total).
+ * <<< NOVA ALTERAÇÃO >>>: Atualiza o *valor* do primeiro input de quantidade.
+ */
 function updateDynamicModalValues() {
-    if (!currentRecipeData || !domElements.modalCraftQuantityInput || !domElements.modalTotalItemsLabel || !domElements.modalSellPriceNpcTotalSpan || !domElements.modalCalcPacksLabelNpc || !domElements.modalMaterialsList) { console.warn("[updateDynamicModalValues] Elementos/Dados ausentes."); return; }
+    if (!currentRecipeData || !domElements.modalCraftQuantityInput || !domElements.modalTotalItemsLabel || !domElements.modalSellPriceNpcTotalSpan || !domElements.modalCalcPacksLabelNpc || !domElements.modalMaterialsList) {
+        console.warn("[updateDynamicModalValues] Elementos/Dados ausentes.");
+        return;
+    }
     const desiredPacks = parseInt(domElements.modalCraftQuantityInput.value, 10) || 0;
     const baseQuantityProduced = currentRecipeData.quantity_produced || 1;
     const totalItems = desiredPacks * baseQuantityProduced;
     const totalNpcPrice = (currentRecipeData.npc_sell_price || 0) * desiredPacks;
+
+    // Atualiza labels gerais
     domElements.modalTotalItemsLabel.textContent = calculator.formatCurrency(totalItems);
     domElements.modalCalcPacksLabelNpc.textContent = desiredPacks;
     domElements.modalSellPriceNpcTotalSpan.textContent = calculator.formatCurrency(totalNpcPrice);
-    if(domElements.modalCalcPacksLabelResults) { domElements.modalCalcPacksLabelResults.textContent = desiredPacks; }
+    if(domElements.modalCalcPacksLabelResults) {
+        domElements.modalCalcPacksLabelResults.textContent = desiredPacks;
+    }
+
     try {
+        // Atualiza cada material na lista
         domElements.modalMaterialsList.querySelectorAll('li').forEach(li => {
             const nameSpan = li.querySelector('.material-quantity-display');
             const baseQuantityMaterial = parseInt(li.dataset.baseQuantity, 10);
             const materialName = li.dataset.materialName;
             const recipeMaterial = currentRecipeData.materials.find(m => m.material_name === materialName);
+
             if (nameSpan && !isNaN(baseQuantityMaterial) && materialName && recipeMaterial) {
+                // Calcula a nova quantidade total necessária para este material
                 const newTotalQuantity = baseQuantityMaterial * desiredPacks;
-                li.dataset.totalNeeded = newTotalQuantity; // Guarda total para validação de lotes
+                li.dataset.totalNeeded = newTotalQuantity; // Atualiza o dataset para validação
+
+                // Atualiza o texto exibido
                 const formattedQuantity = calculator.formatCurrency(newTotalQuantity);
                 let textContent = `${formattedQuantity}x ${materialName}`;
-                if (recipeMaterial.material_type === 'profession') { textContent += ` (Profissão)`; }
+                if (recipeMaterial.material_type === 'profession') {
+                    textContent += ` (Profissão)`;
+                }
                 nameSpan.textContent = textContent;
-                // Valida lotes (drop/buy) ou limpa estilos (profession)
+
+                // Lógica específica para tipos 'drop'/'buy'
                 if (recipeMaterial.material_type !== 'profession') {
+                    // <<< NOVA ALTERAÇÃO >>> Encontra e atualiza o PRIMEIRO input de quantidade
+                    const firstQtyInput = li.querySelector('.market-qty-input'); // Pega o primeiro encontrado dentro do <li>
+                    if (firstQtyInput) {
+                        firstQtyInput.value = newTotalQuantity; // Atualiza o valor do input
+                    } else {
+                         console.warn(`[updateDynamicModalValues] Primeiro input de quantidade não encontrado para ${materialName}`);
+                    }
+
+                    // Revalida os inputs de lote para este material (considerando o valor atualizado do primeiro input)
                     validateAndUpdateLotInputs(li);
                 } else {
                     // Garante que inputs de profissão não tenham estilo de validação de lote
-                     const profCostInput = li.querySelector('.profession-cost-input');
-                     if(profCostInput) profCostInput.classList.remove('input-valid', 'input-invalid', 'input-warning');
+                    const profCostInput = li.querySelector('.profession-cost-input');
+                    if(profCostInput) profCostInput.classList.remove('input-valid', 'input-invalid', 'input-warning');
                 }
-            } else { console.warn(`[updateDynamicModalValues] Falha ao atualizar: ${materialName || 'desconhecido'}.`); }
+            } else {
+                console.warn(`[updateDynamicModalValues] Falha ao atualizar dados para: ${materialName || 'material desconhecido'}.`);
+            }
         });
-    } catch (error) { console.error("[updateDynamicModalValues] Erro ao atualizar materiais/validação:", error); }
+    } catch (error) {
+        console.error("[updateDynamicModalValues] Erro ao atualizar lista de materiais:", error);
+    }
 }
 
 
 /**
  * Lida com a confirmação do cálculo no modal.
- * MODIFICADO: Coleta custos de profissão dos inputs visíveis.
+ * (Sem novas alterações nesta função, a validação e coleta de dados permanecem as mesmas)
  */
 function handleModalConfirm() {
     if (!currentRecipeData) return;
@@ -277,7 +391,8 @@ function handleModalConfirm() {
     const desiredPacks = parseInt(domElements.modalCraftQuantityInput.value, 10);
     if (isNaN(desiredPacks) || desiredPacks <= 0) { ui.showStatusMessage(elements.modalStatus, "Quantidade de Packs inválida.", "error"); return; }
 
-    let isOverallValid = true;
+    let isOverallValid = true; // Flag para erros que impedem o cálculo
+    let hasWarnings = false;   // Flag para avisos (amarelo)
     const marketPricesMaterialsAvg = {};
     const materialListItems = domElements.modalMaterialsList.querySelectorAll('li');
 
@@ -288,20 +403,34 @@ function handleModalConfirm() {
         if (recipeMaterial && (recipeMaterial.material_type === 'drop' || recipeMaterial.material_type === 'buy')) {
             const isMaterialInvalid = li.querySelector('.market-qty-input.input-invalid') !== null;
             if (isMaterialInvalid) {
-                 const totalNeeded = calculator.formatCurrency(parseInt(li.dataset.totalNeeded || 0, 10)); let currentSum = 0; li.querySelectorAll('.market-qty-input').forEach(input => { currentSum += parseInt(input.value, 10) || 0; }); const formattedSum = calculator.formatCurrency(currentSum);
-                 const errorMsg = `Erro: Quantidade do lote para '${materialName}' (${formattedSum}) excede o necessário (${totalNeeded}). Ajuste os campos em vermelho.`;
-                 ui.showStatusMessage(elements.modalStatus, errorMsg, "error"); isOverallValid = false; break;
+                const totalNeeded = calculator.formatCurrency(parseInt(li.dataset.totalNeeded || 0, 10));
+                let currentSum = 0;
+                li.querySelectorAll('.market-qty-input').forEach(input => { currentSum += parseInt(input.value, 10) || 0; });
+                const formattedSum = calculator.formatCurrency(currentSum);
+                const errorMsg = `Erro: Quantidade do lote para '${materialName}' (${formattedSum}) excede o necessário (${totalNeeded}). Ajuste os campos em vermelho.`;
+                ui.showStatusMessage(elements.modalStatus, errorMsg, "error");
+                isOverallValid = false; // Erro impede cálculo
+                break; // Para a validação no primeiro erro
+            }
+
+            const isMaterialWarning = li.querySelector('.market-qty-input.input-warning') !== null;
+            if (isMaterialWarning) {
+                hasWarnings = true; // Marca que há um aviso
+                // Não mostra a mensagem aqui, mostra um aviso geral no final se houver warnings e nenhum erro
             }
         }
-        // Não há validação extra necessária para custo de profissão aqui (aceita qualquer valor >= 0)
     }
-    if (!isOverallValid) { console.warn("[handleModalConfirm] Validação final falhou."); return; }
 
-    // *** MUDANÇA: Coleta de custos de profissão ***
+    if (!isOverallValid) {
+        console.warn("[handleModalConfirm] Validação final falhou (erro nos inputs).");
+        if (domElements.modalResultsDiv) domElements.modalResultsDiv.style.display = 'none'; // Esconde resultados antigos se houver erro
+        return; // Interrompe se houver erro
+    }
+
+    // Coleta custos de profissão
     const professionCosts = {};
     materialListItems.forEach(li => {
         const profCostInput = li.querySelector('.profession-cost-input');
-        // Considera o custo apenas se o input existir e estiver visível (pai não está display:none)
         if (profCostInput && profCostInput.closest('.profession-cost-area')?.style.display !== 'none') {
             const materialName = profCostInput.dataset.materialName;
             const cost = parseFloat(profCostInput.value);
@@ -311,43 +440,75 @@ function handleModalConfirm() {
         }
     });
     console.log("[handleModalConfirm] Custos de profissão coletados:", professionCosts);
-    // *** FIM da coleta de custos ***
 
-
-    // Cálculo do Preço Médio para drop/buy (igual anterior)
+    // Cálculo do Preço Médio para drop/buy
     let calculationError = false;
-    materialListItems.forEach(li => { /* ... (lógica de cálculo da média igual anterior) ... */
-        const materialName = li.dataset.materialName; const recipeMaterial = currentRecipeData.materials.find(m => m.material_name === materialName);
+    materialListItems.forEach(li => {
+        const materialName = li.dataset.materialName;
+        const recipeMaterial = currentRecipeData.materials.find(m => m.material_name === materialName);
         if (recipeMaterial && (recipeMaterial.material_type === 'drop' || recipeMaterial.material_type === 'buy')) {
-            const pairsContainer = li.querySelector('.price-qty-pairs-container'); if (!pairsContainer) { console.error(`Container de pares não encontrado para ${materialName}`); calculationError = true; return; }
-            const pairs = pairsContainer.querySelectorAll('.price-qty-pair'); let totalCostForMaterial = 0; let totalQtyForMaterial = 0;
+            const pairsContainer = li.querySelector('.price-qty-pairs-container');
+            if (!pairsContainer) {
+                console.error(`Container de pares não encontrado para ${materialName}`);
+                calculationError = true; return; // Continua para outros materiais, mas marca erro
+            }
+            const pairs = pairsContainer.querySelectorAll('.price-qty-pair');
+            let totalCostForMaterial = 0;
+            let totalQtyForMaterial = 0;
             pairs.forEach(pair => {
-                const priceInput = pair.querySelector('.market-price-input'); const qtyInput = pair.querySelector('.market-qty-input');
-                const price = parseFloat(priceInput?.value) || 0; const qty = parseInt(qtyInput?.value, 10) || 0;
-                if (qty > 0 && price >= 0) { totalCostForMaterial += price * qty; totalQtyForMaterial += qty; }
+                const priceInput = pair.querySelector('.market-price-input');
+                const qtyInput = pair.querySelector('.market-qty-input');
+                const price = parseFloat(priceInput?.value) || 0;
+                const qty = parseInt(qtyInput?.value, 10) || 0;
+
+                if (isNaN(price) || price < 0 || isNaN(qty) || qty <= 0) {
+                    console.warn(`Dados inválidos no par para ${materialName}: Preço=${priceInput?.value}, Qtd=${qtyInput?.value}. Pulando este par.`);
+                    return; // Pula este par inválido
+                }
+                totalCostForMaterial += price * qty;
+                totalQtyForMaterial += qty;
             });
-            const avgPrice = (totalQtyForMaterial > 0) ? totalCostForMaterial / totalQtyForMaterial : 0; marketPricesMaterialsAvg[materialName] = avgPrice;
+            // Calcula preço médio APENAS com base nos lotes preenchidos válidos
+            const avgPrice = (totalQtyForMaterial > 0) ? totalCostForMaterial / totalQtyForMaterial : 0;
+            marketPricesMaterialsAvg[materialName] = avgPrice;
+            console.log(`[handleModalConfirm] ${materialName}: Qtd Total=${totalQtyForMaterial}, Custo Total=${totalCostForMaterial}, Preço Médio=${avgPrice}`);
         }
     });
-    if (calculationError) { ui.showStatusMessage(elements.modalStatus, "Erro ao processar dados dos lotes.", "error"); return; }
 
-    // Leitura Preço Venda (igual anterior)
+    if (calculationError) {
+        ui.showStatusMessage(elements.modalStatus, "Erro ao processar dados dos lotes.", "error");
+        if (domElements.modalResultsDiv) domElements.modalResultsDiv.style.display = 'none'; // Esconde resultados
+        return;
+    }
+
+    // Leitura Preço Venda
     const marketSellPricePerPack = parseFloat(domElements.modalSellPriceMarketInput.value);
-    if (isNaN(marketSellPricePerPack) || marketSellPricePerPack < 0) { ui.showStatusMessage(elements.modalStatus, "Preço de venda inválido.", "error"); return; }
+    if (isNaN(marketSellPricePerPack) || marketSellPricePerPack < 0) {
+        ui.showStatusMessage(elements.modalStatus, "Preço de venda inválido.", "error");
+        if (domElements.modalResultsDiv) domElements.modalResultsDiv.style.display = 'none'; // Esconde resultados
+        return;
+    }
 
     // Chamar Funções de Cálculo
     try {
-        // *** MUDANÇA: Passa os custos de profissão coletados para a função ***
         const totalCost = calculator.calculateCraftingCost(currentRecipeData, marketPricesMaterialsAvg, desiredPacks, professionCosts);
-
-        const totalMarketRevenue = marketSellPricePerPack * desiredPacks; const sellPricesForCalc = { market: totalMarketRevenue };
+        const totalMarketRevenue = marketSellPricePerPack * desiredPacks;
+        const sellPricesForCalc = { market: totalMarketRevenue };
         const profitResults = calculator.calculateProfit(totalCost, currentRecipeData, sellPricesForCalc, desiredPacks);
 
         displayModalResults(totalCost, profitResults, desiredPacks);
-        ui.hideStatusMessage(elements.modalStatus);
+
+        // Lida com mensagens de status: mostra aviso se necessário, senão limpa
+        if (hasWarnings) {
+            ui.showStatusMessage(elements.modalStatus, "Aviso: Quantidade de alguns lotes é menor que o necessário. Custo calculado com base no informado.", "info");
+        } else {
+            ui.hideStatusMessage(elements.modalStatus); // Limpa status de loading ou erro anterior
+        }
+
     } catch (error) {
-        console.error("Erro durante cálculo final:", error); ui.showStatusMessage(elements.modalStatus, `Erro no cálculo: ${error.message || 'Erro desconhecido.'}`, "error");
-        if (domElements.modalResultsDiv) domElements.modalResultsDiv.style.display = 'none';
+        console.error("Erro durante cálculo final:", error);
+        ui.showStatusMessage(elements.modalStatus, `Erro no cálculo: ${error.message || 'Erro desconhecido.'}`, "error");
+        if (domElements.modalResultsDiv) domElements.modalResultsDiv.style.display = 'none'; // Esconde resultados
     }
 }
 
@@ -367,7 +528,8 @@ function displayModalResults(cost, profits, packsCalculated) {
     if (percentageSpan) {
         let marketProfitPercentageText = '- %'; let percentageColor = 'inherit';
         if (cost > 0) { const marketProfitPercentage = (profits.profitMarket / cost) * 100; marketProfitPercentageText = `(${marketProfitPercentage.toFixed(1)}%)`; percentageColor = profits.profitMarket >= 0 ? 'var(--color-success)' : 'var(--color-danger)'; }
-        else if (profits.profitMarket > 0) { marketProfitPercentageText = '(∞%)'; percentageColor = 'var(--color-success)'; }
+        else if (profits.profitMarket > 0) { marketProfitPercentageText = '(∞%)'; percentageColor = 'var(--color-success)'; } // Lucro infinito se custo zero
+        else { marketProfitPercentageText = '(0.0%)'; percentageColor = 'inherit'; } // Lucro zero se custo zero
         percentageSpan.textContent = marketProfitPercentageText; percentageSpan.style.color = percentageColor;
     }
     const profMatLine = domElements.modalProfitPerProfMatLine; const profMatValueSpan = domElements.modalProfitPerProfMatValue;
