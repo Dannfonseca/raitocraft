@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://apipokecraft-production.up.railway.app/api'; // <<< ADICIONADO https:// e /api
+const API_BASE_URL = 'https://apipokecraft.onrender.com'; // <<< ADICIONADO https:// e /api
 
 /**
  * Função auxiliar para tratar respostas fetch
