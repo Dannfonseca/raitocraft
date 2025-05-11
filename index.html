@@ -84,20 +84,23 @@
          <div class="modal-content">
              <span id="modal-close-button" class="close-button">&times;</span>
              <h3 id="modal-item-name" class="modal-title">Calcular Custo: [Nome Item]</h3>
-             <div class="form-group">
-                 <label for="modal-craft-quantity">Quantidade de Packs a Fabricar:</label>
-                 <input type="number" id="modal-craft-quantity" value="1" min="1">
-                 <span class="label-detail">(Total: <span id="modal-total-items-label">0</span> unidades)</span>
+             
+             <div class="modal-body-scrollable">
+                 <div class="form-group">
+                     <label for="modal-craft-quantity">Quantidade de Packs a Fabricar:</label>
+                     <input type="number" id="modal-craft-quantity" value="1" min="1">
+                     <span class="label-detail">(Total: <span id="modal-total-items-label">0</span> unidades)</span>
+                 </div>
+                 <h4 class="sub-title-small">Custos de Materiais (Preços de Mercado Atuais):</h4>
+                 <ul id="modal-materials-list" class="modal-materials"></ul>
+                 <h4 class="sub-title-small">Preços de Venda:</h4>
+                  <div class="form-group">
+                      <label for="modal-sell-price-market">Preço Venda Mercado (por Pack):</label>
+                      <input type="number" id="modal-sell-price-market" value="0" min="0">
+                  </div>
+                 <p class="info-text">Preço Venda NPC (por Pack Base): <strong id="modal-sell-price-npc-base">0</strong></p>
+                 <p class="label-detail">(Total NPC Estimado para <span id="modal-calc-packs-label-npc">1</span> pack(s): <strong id="modal-sell-price-npc-total">0</strong>)</p>
              </div>
-             <h4 class="sub-title-small">Custos de Materiais (Preços de Mercado Atuais):</h4>
-             <ul id="modal-materials-list" class="modal-materials"></ul>
-             <h4 class="sub-title-small">Preços de Venda:</h4>
-              <div class="form-group">
-                  <label for="modal-sell-price-market">Preço Venda Mercado (por Pack):</label>
-                  <input type="number" id="modal-sell-price-market" value="0" min="0">
-              </div>
-             <p class="info-text">Preço Venda NPC (por Pack Base): <strong id="modal-sell-price-npc-base">0</strong></p>
-             <p class="label-detail">(Total NPC Estimado para <span id="modal-calc-packs-label-npc">1</span> pack(s): <strong id="modal-sell-price-npc-total">0</strong>)</p>
              <button id="modal-confirm-button" class="button button-primary modal-confirm-btn">Confirmar Cálculo</button>
              <div id="modal-results" class="modal-results-area" style="display: none;">
                   <h4 class="sub-title-small">Resultados do Cálculo (para <span id="modal-calc-packs-label-results">1</span> pack(s)):</h4>
@@ -127,7 +130,8 @@
          <div class="modal-content">
              <span id="edit-modal-close-button" class="close-button">&times;</span>
              <h3 class="modal-title">Editando Item: <span id="edit-modal-item-title-name"></span></h3>
-             <form id="edit-modal-form">
+             
+             <form id="edit-modal-form" class="modal-body-scrollable">
                   <input type="hidden" id="edit-modal-item-id">
                   <div class="form-group">
                       <label for="edit-modal-name">Nome do Item/Pack:</label>
@@ -146,11 +150,9 @@
                   </div>
                   <button type="button" id="edit-modal-add-material-button" class="button button-secondary">Adicionar Material</button>
                   <hr>
-                  <div class="form-actions">
-                      <button type="submit" class="button button-primary">Salvar Alterações</button>
-                      <button type="button" id="edit-modal-cancel-button" class="button button-secondary">Cancelar Edição</button>
-                  </div>
-             </form>
+                  </form> <div class="form-actions"> <button type="submit" form="edit-modal-form" class="button button-primary">Salvar Alterações</button>
+                 <button type="button" id="edit-modal-cancel-button" class="button button-secondary">Cancelar Edição</button>
+             </div>
              <div id="edit-modal-status" class="status-message"></div>
          </div>
     </div>

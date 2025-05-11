@@ -66,22 +66,23 @@ body {
     --color-warning-bg: #fff8e6;
 
     --background-alt-color: #f9f9f9; /* Usado em areas de custo de profissão */
+    --item-card-fixed-width: 320px; /* Largura fixa para os cards */
 }
 
 html[data-theme="dark"] {
-    --primary-color: #0d6efd; /* Um pouco mais vibrante para o escuro */
+    --primary-color: #0d6efd; 
     --secondary-color: #7a828a;
     --success-color: #198754;
     --danger-color: #dc3545;
     --warning-color: #ffc107;
     --info-color: #0dcaf0;
-    --light-color: #adb5bd; /* Cinza claro no tema escuro */
-    --dark-color: #f8f9fa; /* Quase branco no tema escuro */
+    --light-color: #adb5bd; 
+    --dark-color: #f8f9fa; 
 
     --background-color: #121212;
     --text-color: #e0e0e0;
     --text-color-secondary: #a0a0a0;
-    --text-color-emphasis: #66b3ff; /* Azul mais claro para destaque */
+    --text-color-emphasis: #66b3ff; 
     --border-color: #3a3a3a;
     --border-color-soft: #2c2c2c;
     --input-border-color: #4a4a4a;
@@ -98,11 +99,9 @@ html[data-theme="dark"] {
     --button-danger-bg: var(--danger-color);
     --button-danger-text: #ffffff;
 
-    /* Cores de destaque para pesquisa de sub-item no modo escuro */
     --highlight-bg-color: var(--highlight-bg-color-dark);
     --highlight-border-color: var(--highlight-border-color-dark);
 
-    /* Cores para validação de inputs no modo escuro */
     --color-success-bg: #1c3d1c;
     --color-danger-bg: #3d1c1c;
     --color-warning-bg: #3d301c;
@@ -118,13 +117,13 @@ html[data-theme="dark"] {
 }
 
 .page-view {
-    background-color: var(--card-bg-color); /* Para que as views tenham fundo consistente com cards */
+    background-color: var(--card-bg-color); 
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 8px var(--card-shadow-color);
     margin-bottom: 20px;
 }
-.page-view:empty { /* Esconde views vazias para não ocupar espaço desnecessário */
+.page-view:empty { 
     display: none !important;
 }
 
@@ -174,12 +173,12 @@ html[data-theme="dark"] {
 
 /* Botão Hambúrguer */
 #hamburger-button {
-    display: none; /* Escondido por padrão em telas maiores */
+    display: none; 
     background: none;
     border: none;
     cursor: pointer;
     padding: 0;
-    z-index: 1001; /* Acima da navegação */
+    z-index: 1001; 
 }
 
 #hamburger-button span {
@@ -268,6 +267,7 @@ hr {
     transition: background-color 0.2s, opacity 0.2s;
     border: none;
     text-align: center;
+    flex-shrink: 0; 
 }
 button:disabled {
     opacity: 0.6;
@@ -318,11 +318,12 @@ button:disabled {
     border-radius: 4px;
     font-weight: 500;
     text-align: center;
-    display: none; /* Escondido por padrão */
+    display: none; 
+    flex-shrink: 0;
 }
 .status-success {
     background-color: var(--success-color);
-    color: var(--button-primary-text); /* Assumindo texto branco para contraste */
+    color: var(--button-primary-text); 
 }
 .status-error {
     background-color: var(--danger-color);
@@ -334,7 +335,7 @@ button:disabled {
 }
 .status-loading {
     background-color: var(--warning-color);
-    color: #212529; /* Texto escuro para fundo amarelo */
+    color: #212529; 
 }
 
 /* Abas de Inserção, Cálculo e Edição */
@@ -355,14 +356,14 @@ button:disabled {
 }
 .material-entry {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); /* Responsivo */
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
     gap: 10px;
     padding: 10px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    align-items: end; /* Alinha itens na base dos seus containers */
+    align-items: end; 
 }
-.material-entry > div { /* Para que os labels e inputs dentro do material-entry se organizem bem */
+.material-entry > div { 
     display: flex;
     flex-direction: column;
 }
@@ -375,20 +376,18 @@ button:disabled {
     font-size: 0.95em;
 }
 .remove-material-button {
-    /* Ocupa a coluna toda ou alinha com outros */
-    grid-column: -1; /* Tenta colocar na última coluna se houver espaço */
-    align-self: end; /* Alinha o botão na parte de baixo da sua célula */
-    margin-top: 10px; /* Espaço se estiver em nova linha */
+    grid-column: -1; 
+    align-self: end; 
+    margin-top: 10px; 
 }
 .npc-price-field-container {
-    /* Estilos específicos se necessário, já coberto por material-entry > div */
 }
 
 /* Pesquisa de Item */
 .search-container {
     margin-bottom: 20px;
     display: flex;
-    flex-direction: column; /* Label em cima, input embaixo */
+    flex-direction: column; 
 }
 .search-container label {
     margin-bottom: 5px;
@@ -399,8 +398,8 @@ button:disabled {
     border: 1px solid var(--input-border-color);
     border-radius: 4px;
     font-size: 1em;
-    width: 100%; /* Ocupa largura total */
-    max-width: 400px; /* Limita largura máxima */
+    width: 100%; 
+    max-width: 400px; 
     background-color: var(--input-bg-color);
     color: var(--text-color);
 }
@@ -408,14 +407,24 @@ button:disabled {
 /* Cards de Item (para Cálculo e Edição) */
 .item-card-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    /* Muda para centralizar os itens quando eles não preenchem a linha */
+    grid-template-columns: repeat(auto-fit, minmax(var(--item-card-fixed-width), 1fr));
     gap: 20px;
+    justify-content: center; /* Centraliza os cards na linha do grid se houver espaço */
 }
+/* Se você quiser que os cards sempre se alinhem à esquerda, mesmo que haja espaço: */
+/* .item-card-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, var(--item-card-fixed-width));
+    gap: 20px;
+    justify-content: flex-start; /* Alinha à esquerda */
+/* } */
+
 .loading-text, .info-text {
     text-align: center;
     color: var(--text-color-secondary);
     padding: 20px;
-    grid-column: 1 / -1; /* Ocupa todas as colunas */
+    grid-column: 1 / -1; 
 }
 
 .item-card {
@@ -430,6 +439,9 @@ button:disabled {
     transition: all 0.3s ease-in-out;
     overflow: hidden;
     position: relative;
+    width: var(--item-card-fixed-width); /* Aplica a largura fixa */
+    /* margin-left: auto;  Removido pois justify-content no container é melhor */
+    /* margin-right: auto; Removido */
 }
 .item-card.highlight-contains-searched-material {
     background-color: var(--highlight-bg-color);
@@ -465,10 +477,14 @@ html[data-theme="dark"] .item-card-expanded {
     margin-top: 10px;
     display: flex;
     gap: 10px;
+    flex-shrink: 0; 
 }
 .item-card-actions button {
-    flex-grow: 1; /* Botões podem crescer para preencher espaço */
+    flex-basis: 0; 
+    flex-grow: 1;  
+    max-width: 200px; 
 }
+
 
 /* Preview de Materiais no Card (Hover) */
 .item-card-materials-preview {
@@ -507,36 +523,42 @@ html[data-theme="dark"] .item-card-expanded {
 
 /* Modal Genérico */
 .modal {
-    display: none; /* Escondido por padrão */
+    display: none;
     position: fixed;
-    z-index: 1050; /* Acima de outros conteúdos */
+    z-index: 1050;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto; /* Habilita scroll se o conteúdo for maior */
     background-color: var(--modal-backdrop-color);
-    align-items: center; /* Centraliza verticalmente */
-    justify-content: center; /* Centraliza horizontalmente */
+    align-items: center;
+    justify-content: center;
+    padding: 20px; 
 }
 .modal-content {
-    background-color: var(--card-bg-color); /* Mesmo fundo de cards */
-    margin: auto; /* Para IE11 e centralização com align/justify */
+    background-color: var(--card-bg-color);
+    margin: auto;
     padding: 25px;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    width: 90%;
-    max-width: 600px; /* Largura máxima */
+    width: 100%; 
+    max-width: 600px;
     position: relative;
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    max-height: 90vh; /* Altura máxima, permite scroll interno */
+    max-height: calc(100vh - 40px); 
     display: flex;
     flex-direction: column;
+    overflow: hidden; 
 }
-.modal-content form, .modal-content > div:not(.status-message):not(.form-actions):not(.modal-results-area) {
-    overflow-y: auto; /* Scroll para conteúdo interno do modal */
-    padding-right: 10px; /* Espaço para a barra de rolagem */
+
+/* Conteúdo rolável dentro do modal */
+.modal-body-scrollable {
+    overflow-y: auto;
+    flex-grow: 1; 
+    padding-right: 15px; 
+    margin-right: -15px; 
 }
+
 
 .close-button {
     color: var(--text-color-secondary);
@@ -546,6 +568,7 @@ html[data-theme="dark"] .item-card-expanded {
     font-size: 28px;
     font-weight: bold;
     line-height: 1;
+    z-index: 1; 
 }
 .close-button:hover,
 .close-button:focus {
@@ -557,18 +580,19 @@ html[data-theme="dark"] .item-card-expanded {
     margin-bottom: 20px;
     color: var(--text-color-emphasis);
     font-size: 1.5em;
+    flex-shrink: 0; 
+    padding-right: 15px; 
 }
 
 /* Modal de Cálculo Específico */
-#modal-materials-list {
+#modal-materials-list { 
     list-style: none;
     padding: 0;
-    margin-bottom: 15px;
 }
 #modal-materials-list li {
-    padding: 10px;
+    padding: 10px 0; 
     border-bottom: 1px solid var(--border-color-soft);
-    margin-bottom: 5px; /* Espaço entre itens da lista */
+    margin-bottom: 5px;
 }
 #modal-materials-list li:last-child {
     border-bottom: none;
@@ -600,7 +624,7 @@ html[data-theme="dark"] .item-card-expanded {
     color: var(--text-color);
 }
 html[data-theme="dark"] .price-qty-pair input[type="number"] {
-    background-color: var(--input-bg-color, #333); /* Garante fallback */
+    background-color: var(--input-bg-color, #333);
 }
 .price-qty-pair .market-price-input {
     flex-grow: 1;
@@ -608,15 +632,6 @@ html[data-theme="dark"] .price-qty-pair input[type="number"] {
 .price-qty-pair .market-qty-input {
      width: 70px;
 }
-.remove-pair-button {
-    /* Já coberto por .button-xsmall se aplicado */
-}
-.add-pair-button {
-    /* Já coberto por .button-small se aplicado */
-    display: block; /* Para ocupar a largura e centralizar texto */
-    margin: 5px auto 0 auto; /* Para centralizar se for block */
-}
-
 
 .profession-cost-area {
     display: flex;
@@ -636,7 +651,7 @@ html[data-theme="dark"] .price-qty-pair input[type="number"] {
     border: 1px solid var(--input-border-color);
 }
 html[data-theme="dark"] .profession-cost-input {
-    background-color: var(--input-bg-color, #333); /* Garante fallback */
+    background-color: var(--input-bg-color, #333);
 }
 .add-prof-cost-button {
     margin-left: 10px;
@@ -644,9 +659,13 @@ html[data-theme="dark"] .profession-cost-input {
 }
 
 .modal-results-area {
-    margin-top: 20px;
+    margin-top: 15px; 
     padding-top: 15px;
+    padding-right: 15px; 
     border-top: 1px solid var(--border-color);
+    flex-shrink: 0; 
+    overflow-y: auto; 
+    max-height: 150px; 
 }
 .modal-results-area p {
     margin-bottom: 8px;
@@ -663,23 +682,33 @@ html[data-theme="dark"] .profession-cost-input {
     color: var(--text-color-secondary);
 }
 
-
-/* Modal de Edição (se houver estilos específicos) */
-#edit-form-container {
+/* Modal de Edição e seus botões de ação */
+#edit-form-container { 
     margin-top: 20px;
     padding: 20px;
     border: 1px solid var(--border-color);
     border-radius: 8px;
     background-color: var(--background-alt-color);
 }
-.form-actions {
+
+.modal-content > .form-actions {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    margin-top: 20px;
+    margin-top: 15px; 
     padding-top: 15px;
+    padding-right: 15px; 
     border-top: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
+#calculation-modal .modal-confirm-btn {
+    margin-top: 15px; 
+    width: calc(100% - 15px); 
+    margin-left: auto; 
+    margin-right: auto; 
+    display: block;
+}
+
 
 /* Validação de Inputs de Lote (Modal de Cálculo) */
 .input-valid {
@@ -697,7 +726,7 @@ html[data-theme="dark"] .profession-cost-input {
 html[data-theme="dark"] .input-valid,
 html[data-theme="dark"] .input-invalid,
 html[data-theme="dark"] .input-warning {
-    color: var(--text-color); /* Garante contraste do texto do input no dark mode */
+    color: var(--text-color);
 }
 
 
@@ -706,7 +735,7 @@ html[data-theme="dark"] .input-warning {
     text-align: center;
     padding: 20px;
     margin-top: 30px;
-    background-color: var(--card-bg-color); /* Fundo consistente */
+    background-color: var(--card-bg-color);
     border-top: 1px solid var(--border-color);
     color: var(--text-color-secondary);
     font-size: 0.9em;
@@ -735,22 +764,25 @@ html[data-theme="dark"] .input-warning {
 
 /* Responsividade */
 @media (max-width: 768px) {
+    body {
+        padding-top: 56px; 
+    }
     .main-header h1 {
-        font-size: 1.2em;
+        font-size: 1.1em;
     }
     .main-navigation {
-        display: none; /* Escondido por padrão no mobile */
+        display: none;
         flex-direction: column;
         width: 100%;
         background-color: var(--primary-color);
         position: absolute;
-        top: 60px; /* Altura do header */
+        top: 56px; 
         left: 0;
         padding: 10px 0;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     .main-navigation.mobile-menu-open {
-        display: flex; /* Mostra quando ativo */
+        display: flex;
     }
     .main-navigation button {
         display: block;
@@ -764,20 +796,44 @@ html[data-theme="dark"] .input-warning {
         border-bottom: none;
     }
     #hamburger-button {
-        display: block; /* Visível em telas menores */
+        display: block;
     }
 
     .item-card-container {
-        grid-template-columns: 1fr; /* Uma coluna em telas pequenas */
+        /* Em telas menores, mantém uma coluna, mas o justify-content: center ainda se aplica */
+        grid-template-columns: 1fr;
     }
+    .item-card {
+        /* Para garantir que o card único não ocupe 100% da largura em mobile se o container for flex */
+        /* Mas como é grid e 1fr, ele já ocupará. A centralização vem do justify-content do container */
+        width: auto; /* Permite que ocupe a coluna do grid, mas o container grid o centralizará se for a única coluna */
+        /* Se você quiser que ele seja menor que a largura total e centralizado: */
+        /* max-width: var(--item-card-fixed-width); */
+        /* margin-left: auto; */
+        /* margin-right: auto; */
+    }
+
     .material-entry {
-        grid-template-columns: 1fr; /* Uma coluna para entradas de material */
+        grid-template-columns: 1fr;
     }
     .remove-material-button {
-        grid-column: 1; /* Volta para uma coluna */
+        grid-column: 1;
     }
     .modal-content {
-        width: 95%;
+        width: 95%; 
         padding: 20px;
+        max-height: calc(100vh - 20px); 
+    }
+    .modal-body-scrollable {
+        padding-right: 5px; 
+        margin-right: -5px;
+    }
+    .modal-title,
+    .modal-results-area,
+    .modal-content > .form-actions {
+        padding-right: 5px;
+    }
+    #calculation-modal .modal-confirm-btn {
+        width: calc(100% - 5px);
     }
 }
