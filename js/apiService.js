@@ -1,3 +1,6 @@
+// Path: apiService.js
+// Modificado: JSDoc de fetchItems para refletir a inclusão de materiais.
+// const API_BASE_URL = 'http://localhost:3000/api';
 const API_BASE_URL = 'https://apipokecraft.onrender.com'; // <<< ADICIONADO https:// e /api
 
 /**
@@ -11,23 +14,21 @@ async function handleResponse(response) {
     if (contentType && contentType.indexOf("application/json") !== -1) {
         data = await response.json();
     } else {
-        // Tenta ler como texto se não for JSON (ex: mensagens simples do servidor)
         data = await response.text();
     }
 
     if (!response.ok) {
-        // Tenta extrair mensagem de erro do JSON, senão usa status text
         const error = (data && data.error) || data || response.statusText;
         return Promise.reject(new Error(error));
     }
     return data;
 }
 
-
-
 /**
- * Busca a lista de todos os itens craftáveis (id, nome, preço npc).
- * @returns {Promise<Array<{id: number, name: string, npc_sell_price: number}>>}
+ * Busca a lista de todos os itens craftáveis.
+ * Cada item inclui: id, name, quantity_produced, npc_sell_price, e um array 'materials'.
+ * Cada material no array inclui: material_name, quantity, material_type, default_npc_price.
+ * @returns {Promise<Array<{id: number, name: string, quantity_produced: number, npc_sell_price: number, materials: Array<{material_name: string, quantity: number, material_type: string, default_npc_price: number }>}>>}
  */
 export async function fetchItems() {
     try {
@@ -45,11 +46,11 @@ export async function fetchItems() {
  * @returns {Promise<Object|null>} - Dados da receita ou null se não encontrado.
  */
 export async function fetchRecipe(itemId) {
-    if (!itemId) return Promise.resolve(null); // Resolve com null se ID for inválido
+    if (!itemId) return Promise.resolve(null);
     try {
         const response = await fetch(`${API_BASE_URL}/items/${itemId}/recipe`);
          if (response.status === 404) {
-             return null; // Item não encontrado pelo backend
+             return null;
          }
         return await handleResponse(response);
     } catch (error) {
@@ -113,9 +114,8 @@ export async function deleteItem(itemId) {
         const response = await fetch(`${API_BASE_URL}/items/${itemId}`, {
             method: 'DELETE',
         });
-        // DELETE pode retornar 200 OK com JSON ou 204 No Content sem corpo
         if (response.status === 204) {
-             return { message: 'Receita deletada com sucesso!' }; // Simula resposta JSON
+             return { message: 'Receita deletada com sucesso!' };
         }
         return await handleResponse(response);
     } catch (error) {
