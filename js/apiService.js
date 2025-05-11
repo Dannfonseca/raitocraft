@@ -1,7 +1,7 @@
 // Path: apiService.js
 // Modificado: JSDoc de fetchItems para refletir a inclusão de materiais.
 // const API_BASE_URL = 'http://localhost:3000/api';
-const API_BASE_URL = 'https://apipokecraft.onrender.com'; // <<< ADICIONADO https:// e /api
+const API_BASE_URL = 'https://apiraitocraft.onrender.com/api'; // <<< ADICIONADO https:// e /api
 
 /**
  * Função auxiliar para tratar respostas fetch
