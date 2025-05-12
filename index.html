@@ -13,18 +13,19 @@
 <body>
     <header class="main-header">
         <div class="header-content">
-            <h1>Calculadora de Craft - Pokexgames</h1>
+            <div class="header-title-container"> <h1>Calculadora de Craft - Pokexgames</h1>
+            </div>
+            <nav id="main-nav" class="main-navigation" role="navigation">
+                <button data-page="page-insert">Registrar Item</button>
+                <button data-page="page-calculate">Calcular Lucro</button>
+                <button data-page="page-edit">Gerenciar Itens</button>
+            </nav>
             <button id="hamburger-button" aria-label="Abrir menu" aria-expanded="false">
                 <span></span>
                 <span></span>
                 <span></span>
             </button>
         </div>
-        <nav id="main-nav" class="main-navigation" role="navigation">
-            <button data-page="page-insert">Registrar Item</button>
-            <button data-page="page-calculate">Calcular Lucro</button>
-            <button data-page="page-edit">Gerenciar Itens</button>
-        </nav>
     </header>
 
     <main class="container">
@@ -54,29 +55,33 @@
         </div>
 
         <div id="page-calculate" class="page-view" style="display: none;">
-             <h2 class="page-title">Calcular Lucro de Crafting</h2>
-             <p class="page-description">Selecione um item abaixo para calcular o lucro:</p>
-             <div class="search-container">
-                 <label for="calculate-item-search">Pesquisar Item:</label>
-                 <input type="text" id="calculate-item-search" placeholder="Digite o nome do item...">
-             </div>
-             <div id="calculate-item-list" class="item-card-container">
+             <div class="page-header-centered">
+                <h2 class="page-title">Calcular Lucro de Crafting</h2>
+                <p class="page-description">Selecione um item abaixo para calcular o lucro:</p>
+                <div class="search-container">
+                    <label for="calculate-item-search">Pesquisar Item:</label>
+                    <input type="text" id="calculate-item-search" placeholder="Digite o nome do item...">
+                </div>
+            </div>
+            <div id="calculate-item-list" class="item-card-container">
                   <p id="calculate-loading-message" class="loading-text">Carregando itens...</p>
-             </div>
-             <div id="calculate-status" class="status-message"></div>
+            </div>
+            <div id="calculate-status" class="status-message"></div>
         </div>
 
         <div id="page-edit" class="page-view" style="display: none;">
-             <h2 class="page-title">Gerenciar Itens Registrados</h2>
-             <div class="search-container">
-                 <label for="edit-item-search">Pesquisar Item:</label>
-                 <input type="text" id="edit-item-search" placeholder="Digite o nome do item...">
-             </div>
-             <div id="edit-item-list" class="item-card-container">
+            <div class="page-header-centered">
+                <h2 class="page-title">Gerenciar Itens Registrados</h2>
+                <div class="search-container">
+                    <label for="edit-item-search">Pesquisar Item:</label>
+                    <input type="text" id="edit-item-search" placeholder="Digite o nome do item...">
+                </div>
+            </div>
+            <div id="edit-item-list" class="item-card-container">
                   <p id="edit-loading-message" class="loading-text">Carregando itens...</p>
-             </div>
-             <div id="edit-status" class="status-message"></div>
-             <div id="edit-form-container" class="edit-form-section" style="display: none;"></div>
+            </div>
+            <div id="edit-status" class="status-message"></div>
+            <div id="edit-form-container" class="edit-form-section" style="display: none;"></div>
         </div>
     </main>
 
@@ -101,6 +106,7 @@
                  <p class="info-text">Preço Venda NPC (por Pack Base): <strong id="modal-sell-price-npc-base">0</strong></p>
                  <p class="label-detail">(Total NPC Estimado para <span id="modal-calc-packs-label-npc">1</span> pack(s): <strong id="modal-sell-price-npc-total">0</strong>)</p>
              </div>
+             
              <button id="modal-confirm-button" class="button button-primary modal-confirm-btn">Confirmar Cálculo</button>
              <div id="modal-results" class="modal-results-area" style="display: none;">
                   <h4 class="sub-title-small">Resultados do Cálculo (para <span id="modal-calc-packs-label-results">1</span> pack(s)):</h4>
@@ -150,7 +156,10 @@
                   </div>
                   <button type="button" id="edit-modal-add-material-button" class="button button-secondary">Adicionar Material</button>
                   <hr>
-                  </form> <div class="form-actions"> <button type="submit" form="edit-modal-form" class="button button-primary">Salvar Alterações</button>
+             </form> 
+             
+             <div class="form-actions"> 
+                 <button type="submit" form="edit-modal-form" class="button button-primary">Salvar Alterações</button>
                  <button type="button" id="edit-modal-cancel-button" class="button button-secondary">Cancelar Edição</button>
              </div>
              <div id="edit-modal-status" class="status-message"></div>
@@ -163,6 +172,10 @@
 
     <button id="dark-mode-toggle" title="Alternar tema claro/escuro">
         🌙 </button>
+
+    <div id="item-preview-modal" class="item-preview-modal" style="display: none;">
+    </div>
+
     <script type="module" src="js/main.js"></script>
 </body>
 </html>
