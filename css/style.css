@@ -16,6 +16,7 @@ body {
     background-color: var(--background-color);
     transition: background-color 0.3s, color 0.3s;
     padding-top: 70px; /* Espaço para o header fixo */
+    overflow-x: hidden; /* Essencial para transições de swipe e previne scroll horizontal indesejado */
 }
 
 /* Variáveis de Cor e Tema */
@@ -70,19 +71,19 @@ body {
 }
 
 html[data-theme="dark"] {
-    --primary-color: #0d6efd; 
+    --primary-color: #0d6efd;
     --secondary-color: #7a828a;
     --success-color: #198754;
     --danger-color: #dc3545;
     --warning-color: #ffc107;
     --info-color: #0dcaf0;
-    --light-color: #adb5bd; 
-    --dark-color: #f8f9fa; 
+    --light-color: #adb5bd;
+    --dark-color: #f8f9fa;
 
     --background-color: #121212;
     --text-color: #e0e0e0;
     --text-color-secondary: #a0a0a0;
-    --text-color-emphasis: #66b3ff; 
+    --text-color-emphasis: #66b3ff;
     --border-color: #3a3a3a;
     --border-color-soft: #2c2c2c;
     --input-border-color: #4a4a4a;
@@ -113,19 +114,94 @@ html[data-theme="dark"] {
 .container {
     max-width: 960px;
     margin: 20px auto;
-    padding: 0 20px;
+    padding: 0 20px; /* Ajustado em media query para mobile */
+    position: relative; /* Necessário para o posicionamento absoluto das page-views */
+    overflow-x: hidden; /* Garante que o container contenha as transições */
+    /* A altura será definida pelo conteúdo da página ativa (.page-active com position: relative) */
 }
 
+/* Estilos para Transição de Página */
 .page-view {
-    background-color: var(--card-bg-color); 
+    background-color: var(--card-bg-color);
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 8px var(--card-shadow-color);
-    margin-bottom: 20px;
+    /* margin-bottom removido pois o posicionamento absoluto cuida disso */
+    
+    width: 100%;
+    position: absolute; 
+    top: 0;
+    left: 0;
+    opacity: 0; 
+    transform: translateX(100%); /* Padrão para entrada da direita */
+    display: none; 
+    visibility: hidden; 
 }
-.page-view:empty { 
-    display: none !important;
+
+.page-view.page-animating {
+    /* Duração da transição para deslize e fade */
+    transition: transform 0.3s ease-out, opacity 0.3s ease-out;
 }
+
+.page-view.page-active {
+    opacity: 1;
+    transform: translateX(0);
+    position: relative; /* Página ativa ocupa espaço e empurra o footer */
+    display: block; 
+    visibility: visible;
+    z-index: 1; 
+}
+
+/* Posições iniciais para entrada durante swipe */
+.page-view.page-enter-from-right {
+    transform: translateX(100%);
+    opacity: 0; /* Começa transparente */
+    display: block; 
+    visibility: visible;
+    z-index: 2; /* Página que entra fica por cima da que sai */
+}
+.page-view.page-enter-from-left {
+    transform: translateX(-100%);
+    opacity: 0; /* Começa transparente */
+    display: block;
+    visibility: visible;
+    z-index: 2;
+}
+
+/* Posições finais para saída durante swipe (aplicadas pela JS para iniciar animação) */
+/* A classe .page-active é removida e a nova de transformação é aplicada */
+.page-view.page-leave-to-left {
+    transform: translateX(-100%); /* Desliza para a esquerda */
+    opacity: 0; /* Desaparece */
+    z-index: 1; /* Fica atrás da página que entra */
+}
+.page-view.page-leave-to-right {
+    transform: translateX(100%); /* Desliza para a direita */
+    opacity: 0; /* Desaparece */
+    z-index: 1;
+}
+
+/* Transições de Fade para navegação por clique (sem swipe) */
+.page-view.page-fade-out {
+    /* Apenas controla a opacidade, transform já está em 0 (ou será para a página que sai) */
+    opacity: 0 !important; /* Força o fade out */
+    /* A transição é aplicada pela classe page-animating */
+    z-index: 1;
+}
+.page-view.page-fade-in-prepare {
+    opacity: 0;
+    transform: translateX(0); /* Garante que está no centro, mas invisível */
+    display: block;
+    visibility: visible;
+    z-index: 2;
+}
+/* A classe .page-active combinada com .page-animating fará o fade-in */
+
+
+.page-view:empty {
+    display: none !important; /* Mantém esta regra */
+}
+
 
 /* Header */
 .main-header {
@@ -136,9 +212,15 @@ html[data-theme="dark"] {
     top: 0;
     left: 0;
     width: 100%;
-    z-index: 1000;
+    z-index: 1000; /* Header sempre acima das páginas durante transição */
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease-out; /* Transição para ocultar/mostrar */
 }
+
+.main-header.header-hidden {
+    transform: translateY(-100%);
+}
+
 
 .header-content {
     display: flex;
@@ -173,12 +255,12 @@ html[data-theme="dark"] {
 
 /* Botão Hambúrguer */
 #hamburger-button {
-    display: none; 
+    display: none;
     background: none;
     border: none;
     cursor: pointer;
     padding: 0;
-    z-index: 1001; 
+    z-index: 1001;
 }
 
 #hamburger-button span {
@@ -267,7 +349,7 @@ hr {
     transition: background-color 0.2s, opacity 0.2s;
     border: none;
     text-align: center;
-    flex-shrink: 0; 
+    flex-shrink: 0;
 }
 button:disabled {
     opacity: 0.6;
@@ -318,12 +400,12 @@ button:disabled {
     border-radius: 4px;
     font-weight: 500;
     text-align: center;
-    display: none; 
+    display: none;
     flex-shrink: 0;
 }
 .status-success {
     background-color: var(--success-color);
-    color: var(--button-primary-text); 
+    color: var(--button-primary-text);
 }
 .status-error {
     background-color: var(--danger-color);
@@ -335,7 +417,7 @@ button:disabled {
 }
 .status-loading {
     background-color: var(--warning-color);
-    color: #212529; 
+    color: #212529;
 }
 
 /* Abas de Inserção, Cálculo e Edição */
@@ -356,14 +438,14 @@ button:disabled {
 }
 .material-entry {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); 
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 10px;
     padding: 10px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    align-items: end; 
+    align-items: end;
 }
-.material-entry > div { 
+.material-entry > div {
     display: flex;
     flex-direction: column;
 }
@@ -376,9 +458,9 @@ button:disabled {
     font-size: 0.95em;
 }
 .remove-material-button {
-    grid-column: -1; 
-    align-self: end; 
-    margin-top: 10px; 
+    grid-column: -1;
+    align-self: end;
+    margin-top: 10px;
 }
 .npc-price-field-container {
 }
@@ -387,7 +469,7 @@ button:disabled {
 .search-container {
     margin-bottom: 20px;
     display: flex;
-    flex-direction: column; 
+    flex-direction: column;
 }
 .search-container label {
     margin-bottom: 5px;
@@ -398,8 +480,8 @@ button:disabled {
     border: 1px solid var(--input-border-color);
     border-radius: 4px;
     font-size: 1em;
-    width: 100%; 
-    max-width: 400px; 
+    width: 100%;
+    max-width: 400px;
     background-color: var(--input-bg-color);
     color: var(--text-color);
 }
@@ -407,24 +489,18 @@ button:disabled {
 /* Cards de Item (para Cálculo e Edição) */
 .item-card-container {
     display: grid;
-    /* Muda para centralizar os itens quando eles não preenchem a linha */
     grid-template-columns: repeat(auto-fit, minmax(var(--item-card-fixed-width), 1fr));
     gap: 20px;
-    justify-content: center; /* Centraliza os cards na linha do grid se houver espaço */
+    justify-content: center;
+    /* A página ativa (.page-active) é position:relative e define a altura do container,
+       permitindo que o footer seja empurrado corretamente. */
 }
-/* Se você quiser que os cards sempre se alinhem à esquerda, mesmo que haja espaço: */
-/* .item-card-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, var(--item-card-fixed-width));
-    gap: 20px;
-    justify-content: flex-start; /* Alinha à esquerda */
-/* } */
 
 .loading-text, .info-text {
     text-align: center;
     color: var(--text-color-secondary);
     padding: 20px;
-    grid-column: 1 / -1; 
+    grid-column: 1 / -1;
 }
 
 .item-card {
@@ -439,9 +515,7 @@ button:disabled {
     transition: all 0.3s ease-in-out;
     overflow: hidden;
     position: relative;
-    width: var(--item-card-fixed-width); /* Aplica a largura fixa */
-    /* margin-left: auto;  Removido pois justify-content no container é melhor */
-    /* margin-right: auto; Removido */
+    width: var(--item-card-fixed-width);
 }
 .item-card.highlight-contains-searched-material {
     background-color: var(--highlight-bg-color);
@@ -450,7 +524,7 @@ button:disabled {
 .item-card-expanded {
     padding-bottom: 10px;
     box-shadow: 0 4px 12px var(--card-shadow-color-expanded);
-    z-index: 10;
+    z-index: 10; /* Para sobrepor outros cards ao expandir */
     border-left-width: 5px;
 }
 html[data-theme="dark"] .item-card-expanded {
@@ -477,12 +551,12 @@ html[data-theme="dark"] .item-card-expanded {
     margin-top: 10px;
     display: flex;
     gap: 10px;
-    flex-shrink: 0; 
+    flex-shrink: 0;
 }
 .item-card-actions button {
-    flex-basis: 0; 
-    flex-grow: 1;  
-    max-width: 200px; 
+    flex-basis: 0;
+    flex-grow: 1;
+    max-width: 200px;
 }
 
 
@@ -525,7 +599,7 @@ html[data-theme="dark"] .item-card-expanded {
 .modal {
     display: none;
     position: fixed;
-    z-index: 1050;
+    z-index: 1050; /* Acima do header e de outros elementos */
     left: 0;
     top: 0;
     width: 100%;
@@ -533,7 +607,7 @@ html[data-theme="dark"] .item-card-expanded {
     background-color: var(--modal-backdrop-color);
     align-items: center;
     justify-content: center;
-    padding: 20px; 
+    padding: 20px;
 }
 .modal-content {
     background-color: var(--card-bg-color);
@@ -541,22 +615,22 @@ html[data-theme="dark"] .item-card-expanded {
     padding: 25px;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    width: 100%; 
+    width: 100%;
     max-width: 600px;
     position: relative;
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    max-height: calc(100vh - 40px); 
+    max-height: calc(100vh - 40px);
     display: flex;
     flex-direction: column;
-    overflow: hidden; 
+    overflow: hidden;
 }
 
 /* Conteúdo rolável dentro do modal */
 .modal-body-scrollable {
     overflow-y: auto;
-    flex-grow: 1; 
-    padding-right: 15px; 
-    margin-right: -15px; 
+    flex-grow: 1;
+    padding-right: 15px;
+    margin-right: -15px;
 }
 
 
@@ -568,7 +642,7 @@ html[data-theme="dark"] .item-card-expanded {
     font-size: 28px;
     font-weight: bold;
     line-height: 1;
-    z-index: 1; 
+    z-index: 1;
 }
 .close-button:hover,
 .close-button:focus {
@@ -580,17 +654,17 @@ html[data-theme="dark"] .item-card-expanded {
     margin-bottom: 20px;
     color: var(--text-color-emphasis);
     font-size: 1.5em;
-    flex-shrink: 0; 
-    padding-right: 15px; 
+    flex-shrink: 0;
+    padding-right: 15px;
 }
 
 /* Modal de Cálculo Específico */
-#modal-materials-list { 
+#modal-materials-list {
     list-style: none;
     padding: 0;
 }
 #modal-materials-list li {
-    padding: 10px 0; 
+    padding: 10px 0;
     border-bottom: 1px solid var(--border-color-soft);
     margin-bottom: 5px;
 }
@@ -659,13 +733,13 @@ html[data-theme="dark"] .profession-cost-input {
 }
 
 .modal-results-area {
-    margin-top: 15px; 
+    margin-top: 15px;
     padding-top: 15px;
-    padding-right: 15px; 
+    padding-right: 15px;
     border-top: 1px solid var(--border-color);
-    flex-shrink: 0; 
-    overflow-y: auto; 
-    max-height: 150px; 
+    flex-shrink: 0;
+    overflow-y: auto;
+    max-height: 150px;
 }
 .modal-results-area p {
     margin-bottom: 8px;
@@ -683,7 +757,7 @@ html[data-theme="dark"] .profession-cost-input {
 }
 
 /* Modal de Edição e seus botões de ação */
-#edit-form-container { 
+#edit-form-container {
     margin-top: 20px;
     padding: 20px;
     border: 1px solid var(--border-color);
@@ -695,17 +769,17 @@ html[data-theme="dark"] .profession-cost-input {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    margin-top: 15px; 
+    margin-top: 15px;
     padding-top: 15px;
-    padding-right: 15px; 
+    padding-right: 15px;
     border-top: 1px solid var(--border-color);
     flex-shrink: 0;
 }
 #calculation-modal .modal-confirm-btn {
-    margin-top: 15px; 
-    width: calc(100% - 15px); 
-    margin-left: auto; 
-    margin-right: auto; 
+    margin-top: 15px;
+    width: calc(100% - 15px); /* Considera o padding-right do modal-body-scrollable */
+    margin-left: auto;
+    margin-right: auto;
     display: block;
 }
 
@@ -726,7 +800,7 @@ html[data-theme="dark"] .profession-cost-input {
 html[data-theme="dark"] .input-valid,
 html[data-theme="dark"] .input-invalid,
 html[data-theme="dark"] .input-warning {
-    color: var(--text-color);
+    color: var(--text-color); /* Garante legibilidade do texto no dark mode */
 }
 
 
@@ -734,11 +808,13 @@ html[data-theme="dark"] .input-warning {
 .main-footer {
     text-align: center;
     padding: 20px;
-    margin-top: 30px;
+    margin-top: 30px; /* Ajustado se necessário pelo conteúdo do .page-active */
     background-color: var(--card-bg-color);
     border-top: 1px solid var(--border-color);
     color: var(--text-color-secondary);
     font-size: 0.9em;
+    position: relative; /* Para garantir que fique abaixo do conteúdo das páginas */
+    z-index: 0; /* Abaixo das páginas e do header */
 }
 
 /* Botão Dark Mode Toggle */
@@ -758,14 +834,15 @@ html[data-theme="dark"] .input-warning {
     font-size: 1.2em;
     cursor: pointer;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    z-index: 1000;
+    z-index: 1000; /* Mesmo z-index do header para consistência */
 }
 
 
 /* Responsividade */
 @media (max-width: 768px) {
     body {
-        padding-top: 56px; 
+        padding-top: 56px; /* Altura do header mobile */
+        overflow-x: hidden; /* Reitera para segurança */
     }
     .main-header h1 {
         font-size: 1.1em;
@@ -776,7 +853,7 @@ html[data-theme="dark"] .input-warning {
         width: 100%;
         background-color: var(--primary-color);
         position: absolute;
-        top: 56px; 
+        top: 56px; /* Altura do header em mobile */
         left: 0;
         padding: 10px 0;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -799,41 +876,49 @@ html[data-theme="dark"] .input-warning {
         display: block;
     }
 
+    .container {
+        padding: 0 10px; /* Menor padding lateral em mobile */
+        /* O container principal precisa ser capaz de conter as page-views que estão position: absolute */
+    }
+
+    /* As page-views já são position: absolute e têm width: 100% */
+    /* Elas vão se ajustar ao padding do .container */
+    .page-view {
+        padding: 15px; /* Ajusta padding interno das views em mobile */
+        /* margin-bottom não se aplica devido ao position: absolute */
+    }
+
+
     .item-card-container {
-        /* Em telas menores, mantém uma coluna, mas o justify-content: center ainda se aplica */
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* Uma coluna em mobile */
     }
     .item-card {
-        /* Para garantir que o card único não ocupe 100% da largura em mobile se o container for flex */
-        /* Mas como é grid e 1fr, ele já ocupará. A centralização vem do justify-content do container */
-        width: auto; /* Permite que ocupe a coluna do grid, mas o container grid o centralizará se for a única coluna */
-        /* Se você quiser que ele seja menor que a largura total e centralizado: */
-        /* max-width: var(--item-card-fixed-width); */
-        /* margin-left: auto; */
-        /* margin-right: auto; */
+        width: auto; /* Ocupa a largura da coluna do grid */
+        max-width: none; /* Remove qualquer max-width anterior se houver */
     }
 
     .material-entry {
         grid-template-columns: 1fr;
     }
     .remove-material-button {
-        grid-column: 1;
+        grid-column: 1; /* Volta para uma coluna */
     }
+
     .modal-content {
-        width: 95%; 
+        width: 95%;
         padding: 20px;
-        max-height: calc(100vh - 20px); 
+        max-height: calc(100vh - 20px); /* Menor margem para viewport */
     }
     .modal-body-scrollable {
-        padding-right: 5px; 
+        padding-right: 5px;
         margin-right: -5px;
     }
     .modal-title,
     .modal-results-area,
     .modal-content > .form-actions {
-        padding-right: 5px;
+        padding-right: 5px; /* Ajuste para o scrollbar menor */
     }
     #calculation-modal .modal-confirm-btn {
-        width: calc(100% - 5px);
+        width: calc(100% - 5px); /* Ajuste para o padding */
     }
 }
