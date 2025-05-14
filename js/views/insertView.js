@@ -1,3 +1,28 @@
+/*
+  Arquivo: insertView.js
+  Descrição: Este módulo gerencia a funcionalidade da "Página de Registrar Novo Item".
+  Ele fornece um formulário para que os usuários possam inserir os detalhes de uma nova receita
+  de item craftável, incluindo nome do item, quantidade produzida, preço de venda no NPC e
+  uma lista de materiais necessários.
+  Principais Funções:
+  - initInsertView: Inicializa a view, busca os elementos do formulário e configura os listeners
+                    de evento para o botão de adicionar material e para a submissão do formulário.
+                    Também garante que o formulário seja resetado e um campo de material inicial
+                    seja adicionado ao carregar a view.
+  - handleInsertSubmit: Lida com o evento de submissão do formulário. Coleta os dados do formulário,
+                        valida as informações (nome, quantidade produzida, materiais) e, se válidos,
+                        envia os dados para a API para criar a nova receita. Exibe mensagens de status
+                        (sucesso ou erro) e reseta o formulário após o sucesso.
+  - resetInsertForm: Limpa todos os campos do formulário de inserção e a lista de materiais,
+                     adicionando um novo campo de material em branco para facilitar a próxima inserção.
+  Módulos Importados:
+  - api (apiService.js): Para enviar a nova receita para o backend.
+  - ui (ui.js): Para adicionar dinamicamente campos de material ao formulário e exibir mensagens de status.
+  Variáveis Globais do Módulo:
+  - insertForm: Referência ao elemento DOM do formulário de inserção.
+  - materialsContainer: Referência ao container DOM onde os campos de material são adicionados.
+  - statusElementId: ID do elemento DOM usado para exibir mensagens de status nesta view.
+*/
 import * as api from '../apiService.js';
 import * as ui from '../ui.js';
 
@@ -5,9 +30,6 @@ let insertForm = null;
 let materialsContainer = null;
 let statusElementId = 'insert-status';
 
-/**
- * Inicializa a view de inserção, configura listeners.
- */
 export function initInsertView() {
     console.log("Inicializando Insert View...");
     insertForm = document.getElementById('insert-form');
@@ -19,38 +41,29 @@ export function initInsertView() {
         return;
     }
 
-    // Limpa o formulário ao inicializar
     resetInsertForm();
 
-    // Listener para adicionar campo de material
     addMaterialButton.addEventListener('click', () => {
         ui.addMaterialInput(materialsContainer);
     });
 
-    // Listener para submeter o formulário
     insertForm.addEventListener('submit', handleInsertSubmit);
 
-     // Adiciona um campo de material inicial por padrão se o container estiver vazio
      if (!materialsContainer.hasChildNodes()) {
         ui.addMaterialInput(materialsContainer);
      }
 }
 
-/**
- * Lida com a submissão do formulário de inserção.
- * @param {Event} event - O evento de submit.
- */
 async function handleInsertSubmit(event) {
     event.preventDefault();
     ui.showStatusMessage(statusElementId, 'Salvando receita...', 'loading');
 
     const formData = new FormData(insertForm);
-    const materials = ui.getMaterialsData(materialsContainer); // Coleta e valida materiais
+    const materials = ui.getMaterialsData(materialsContainer);
 
-    // Verifica se a coleta de materiais retornou null (erro de validação)
     if (materials === null) {
          ui.showStatusMessage(statusElementId, 'Erro: Verifique os dados dos materiais inseridos.', 'error');
-         return; // Interrompe se houver erro nos materiais
+         return;
     }
 
     const recipeData = {
@@ -60,8 +73,6 @@ async function handleInsertSubmit(event) {
         materials: materials
     };
 
-
-    // Validação dos dados principais
     if (!recipeData.name || !recipeData.quantity_produced || recipeData.quantity_produced <= 0) {
         ui.showStatusMessage(statusElementId, 'Erro: Nome e Quantidade Produzida (> 0) são obrigatórios.', 'error');
         return;
@@ -77,24 +88,18 @@ async function handleInsertSubmit(event) {
         resetInsertForm();
     } catch (error) {
         console.error("Erro ao salvar receita:", error);
-        // Tenta mostrar a mensagem de erro vinda da API, senão uma genérica
         const errorMessage = error.message || "Ocorreu um erro desconhecido.";
         ui.showStatusMessage(statusElementId, `Erro ao salvar: ${errorMessage}`, 'error');
     }
 }
 
-/**
- * Limpa o formulário de inserção e a lista de materiais.
- */
 function resetInsertForm() {
     if (insertForm) {
         insertForm.reset();
     }
     if (materialsContainer) {
         materialsContainer.innerHTML = '';
-        // Adiciona um campo inicial após limpar
         ui.addMaterialInput(materialsContainer);
     }
-     // CORREÇÃO: Adiciona o prefixo 'ui.'
-     ui.hideStatusMessage(statusElementId); // Esconde mensagens antigas
+     ui.hideStatusMessage(statusElementId);
 }

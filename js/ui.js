@@ -1,11 +1,23 @@
-// craftraito/frontend/js/ui.js
-// MODIFICADO: addMaterialInput agora usa placeholders e evita valores default ('0', '1')
-// quando nenhum dado inicial é fornecido (materialData).
+/*
+  Arquivo: ui.js
+  Descrição: Este módulo fornece funções utilitárias para interagir com a interface do usuário (UI).
+  Ele centraliza a lógica para manipulação de elementos DOM comuns, como exibição de mensagens de status,
+  criação dinâmica de campos de formulário para materiais e coleta de dados desses campos.
+  Principais Funções:
+  - showStatusMessage: Exibe uma mensagem (de sucesso, erro, informação, carregamento) em um elemento
+                       específico da UI. As mensagens podem ter um tempo de auto-ocultação.
+  - hideStatusMessage: Oculta uma mensagem de status previamente exibida.
+  - addMaterialInput: Cria e adiciona dinamicamente um conjunto de campos de formulário (nome, quantidade, tipo, preço NPC)
+                      para um material em um container especificado. Permite pré-preencher os campos
+                      com dados existentes (útil para formulários de edição).
+                      Modificação: Agora utiliza placeholders e evita valores padrão ('0', '1')
+                      quando nenhum dado inicial é fornecido. O tipo 'drop' foi removido das opções.
+  - getMaterialsData: Coleta e valida os dados de todos os campos de materiais dentro de um container.
+                      Retorna um array de objetos de material ou null se houver erros de validação.
+  - formatCurrency: Formata um valor numérico como uma string de moeda. (Duplicada de calculator.js,
+                    considerar centralizar ou remover uma das ocorrências se forem idênticas).
+*/
 
-/**
- * Exibe uma mensagem de status em um elemento específico.
- * (Função showStatusMessage sem mudanças)
- */
 export function showStatusMessage(elementId, message, type = 'info') {
     const statusElement = document.getElementById(elementId);
     if (!statusElement) { console.warn(`Elemento de status não encontrado: #${elementId}`); return; }
@@ -14,7 +26,7 @@ export function showStatusMessage(elementId, message, type = 'info') {
         case 'success': statusElement.classList.add('status-success'); break;
         case 'error': statusElement.classList.add('status-error'); break;
         case 'loading': statusElement.classList.add('status-loading'); autoHide = false; break;
-        case 'info': default: statusElement.classList.add('status-info'); break; // Usar classe CSS
+        case 'info': default: statusElement.classList.add('status-info'); break;
     }
     statusElement.style.display = 'block';
      if (autoHide) {
@@ -22,27 +34,17 @@ export function showStatusMessage(elementId, message, type = 'info') {
      }
 }
 
-/**
- * Esconde a mensagem de status de um elemento.
- * (Função hideStatusMessage sem mudanças)
- */
 export function hideStatusMessage(elementId) {
     const statusElement = document.getElementById(elementId);
     if (statusElement) { statusElement.style.display = 'none'; statusElement.textContent = ''; statusElement.className = 'status-message'; }
 }
 
-/**
- * Cria e adiciona um campo de material a um container.
- * @param {HTMLElement} container - O elemento container onde adicionar o campo.
- * @param {Object} [materialData={}] - Dados opcionais para pré-preencher (para edição).
- */
 export function addMaterialInput(container, materialData = {}) {
     const entryDiv = document.createElement('div');
     entryDiv.className = 'material-entry';
 
     const idSuffix = Date.now() + Math.random().toString(16).slice(2);
 
-    // Input Nome
     const nameDiv = document.createElement('div');
     const nameLabel = document.createElement('label');
     nameLabel.textContent = 'Nome Material:';
@@ -56,7 +58,6 @@ export function addMaterialInput(container, materialData = {}) {
     nameInput.required = true;
     nameDiv.append(nameLabel, nameInput);
 
-    // Input Quantidade
     const quantityDiv = document.createElement('div');
     const quantityLabel = document.createElement('label');
     quantityLabel.textContent = 'Qtd:';
@@ -71,7 +72,6 @@ export function addMaterialInput(container, materialData = {}) {
     quantityInput.required = true;
     quantityDiv.append(quantityLabel, quantityInput);
 
-    // Select Tipo
     const typeDiv = document.createElement('div');
     const typeLabel = document.createElement('label');
     typeLabel.textContent = 'Tipo:';
@@ -81,7 +81,6 @@ export function addMaterialInput(container, materialData = {}) {
     typeSelect.id = typeLabel.htmlFor;
     typeSelect.required = true;
 
-    // Invert the order of 'buy' and 'profession' and remove 'drop'
     ['buy', 'profession'].forEach(type => {
         const option = document.createElement('option');
         option.value = type;
@@ -91,7 +90,6 @@ export function addMaterialInput(container, materialData = {}) {
     });
     typeDiv.append(typeLabel, typeSelect);
 
-    // Input Preço NPC (visível condicionalmente)
     const npcPriceDiv = document.createElement('div');
     npcPriceDiv.className = 'npc-price-field-container';
     const npcLabel = document.createElement('label');
@@ -111,7 +109,6 @@ export function addMaterialInput(container, materialData = {}) {
      };
      typeSelect.addEventListener('change', toggleNpcPriceVisibility);
 
-    // Botão Remover
     const removeButtonDiv = document.createElement('div');
     const removeButton = document.createElement('button');
     removeButton.type = 'button';
@@ -130,10 +127,6 @@ export function addMaterialInput(container, materialData = {}) {
     toggleNpcPriceVisibility();
 }
 
-/**
- * Coleta os dados dos materiais de um container.
- * (Função getMaterialsData sem mudanças)
- */
 export function getMaterialsData(container) {
     const materials = [];
     const entries = container.querySelectorAll('.material-entry');
@@ -144,33 +137,27 @@ export function getMaterialsData(container) {
         const typeSelect = entry.querySelector('select[name="material_type"]');
         const npcPriceInput = entry.querySelector('input[name="default_npc_price"]');
         const name = nameInput ? nameInput.value.trim() : '';
-        const quantity = quantityInput ? parseInt(quantityInput.value, 10) : NaN; // Usar NaN se falhar
+        const quantity = quantityInput ? parseInt(quantityInput.value, 10) : NaN;
         const type = typeSelect ? typeSelect.value : '';
-        const npcPrice = npcPriceInput ? parseInt(npcPriceInput.value, 10) : NaN; // Usar NaN se falhar
+        const npcPrice = npcPriceInput ? parseInt(npcPriceInput.value, 10) : NaN;
 
-        // Validação mais rigorosa
         if (!name) { console.error(`Material #${index + 1}: Nome vazio.`); isValid = false; }
         if (isNaN(quantity) || quantity <= 0) { console.error(`Material "${name || index + 1}": Quantidade inválida (${quantityInput?.value}). Deve ser número > 0.`); isValid = false; }
         if (!type || !['profession', 'drop', 'buy'].includes(type)) { console.error(`Material "${name || index + 1}": Tipo inválido (${type}).`); isValid = false; }
-        // Preço NPC é opcional, mas se preenchido deve ser >= 0
-        const npcPriceValue = (!isNaN(npcPrice) && npcPrice >= 0) ? npcPrice : 0; // Usa 0 se inválido ou não aplicável
+        const npcPriceValue = (!isNaN(npcPrice) && npcPrice >= 0) ? npcPrice : 0;
 
         if (isValid) {
              materials.push({
                  material_name: name,
                  quantity: quantity,
                  material_type: type,
-                 default_npc_price: (type !== 'profession') ? npcPriceValue : 0 // Garante 0 para profession
+                 default_npc_price: (type !== 'profession') ? npcPriceValue : 0
              });
         }
     });
     return isValid ? materials : null;
 }
 
-/**
- * Função para formatar moeda
- * (Função formatCurrency sem mudanças)
- */
 export function formatCurrency(value) {
     if (typeof value !== 'number') return '0';
     return Math.floor(value).toLocaleString('pt-BR');

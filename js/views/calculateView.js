@@ -1,5 +1,36 @@
-// Path: calculateView.js
-// Modificado: Implementada pesquisa de sub-itens e visualização de materiais no hover.
+/*
+  Arquivo: calculateView.js
+  Descrição: Este módulo gerencia a funcionalidade da "Página de Cálculo de Lucro".
+  Ele é responsável por carregar a lista de itens craftáveis, permitir a busca por itens
+  (incluindo busca por materiais que compõem os itens), exibir os itens em cards interativos,
+  e abrir um modal detalhado para que o usuário insira preços de mercado e quantidades
+  para calcular o custo de produção e o lucro potencial.
+  Principais Funções:
+  - initCalculateView: Inicializa a view, busca os elementos DOM necessários, anexa listeners de evento
+                       (para pesquisa, botões de calcular, modal).
+  - loadItemsForCalculation: Busca todos os itens da API e dispara a renderização inicial.
+  - renderCalculateItemList: Cria e exibe os cards dos itens na página. Destaca cards se a pesquisa
+                             corresponder a um de seus materiais. Implementa preview de materiais no hover do card.
+  - renderMaterialsPreview: Mostra uma lista de materiais de um item quando o mouse passa sobre o card.
+  - prepareAndOpenCalculateModal: Busca os dados detalhados de um item e abre o modal de cálculo.
+  - openCalculationModal: Preenche o modal com os dados da receita selecionada, permitindo ao usuário
+                          inserir preços de mercado, quantidade de packs e custos de profissão (se aplicável).
+  - closeCalculationModal: Fecha o modal de cálculo.
+  - updateDynamicModalValues: Atualiza dinamicamente os campos no modal (total de itens, quantidades de material)
+                              conforme o usuário altera a quantidade de packs a fabricar.
+  - handleModalConfirm: Valida os inputs do modal, calcula o custo e o lucro usando o módulo 'calculator.js',
+                        e exibe os resultados no modal. Também valida as quantidades de lotes.
+  - displayModalResults: Formata e exibe os resultados do cálculo (custo, receitas, lucros, percentuais) no modal.
+  - filterItems: Filtra a lista de itens exibida com base no termo de pesquisa inserido pelo usuário.
+                 Prioriza correspondências diretas no nome do item sobre correspondências em nomes de materiais.
+  - addPriceQtyPair: Adiciona dinamicamente campos para inserir preço e quantidade de um lote de material no modal.
+  - validateAndUpdateLotInputs: Valida se a soma das quantidades dos lotes de um material corresponde ao total
+                                necessário, aplicando classes CSS para feedback visual.
+  Módulos Importados:
+  - api (apiService.js): Para buscar dados de itens e receitas.
+  - ui (ui.js): Para interações com a UI, como exibir mensagens de status.
+  - calculator (calculator.js): Para realizar os cálculos de custo e lucro.
+*/
 import * as api from '../apiService.js';
 import * as ui from '../ui.js';
 import * as calculator from '../calculator.js';
@@ -39,7 +70,7 @@ const elements = {
 let domElements = {};
 let currentRecipeData = null;
 let allItems = [];
-let activeCardExpanded = null; // Para controlar o card expandido
+let activeCardExpanded = null;
 
 function validateAndUpdateLotInputs(materialLiElement) {
     if (!materialLiElement) return;
@@ -131,14 +162,12 @@ function renderCalculateItemList(itemsToRender) {
         if (domElements.calculateItemSearch && domElements.calculateItemSearch.value) {
             container.innerHTML = '<p class="info-text">Nenhum item encontrado com o termo pesquisado.</p>';
         }
-        // Não mostra "Nenhum item registrado" se for resultado de uma pesquisa vazia.
-        // Isso é tratado em loadItemsForCalculation se a lista original de allItems for vazia.
         return;
     }
 
     itemsToRender.forEach(itemWrapper => {
-        const item = itemWrapper.item; // O objeto do item original
-        const isSubItemMatch = itemWrapper.isSubItemMatch; // Booleano indicando se foi um match por subitem
+        const item = itemWrapper.item;
+        const isSubItemMatch = itemWrapper.isSubItemMatch;
 
         const card = document.createElement('div');
         card.className = 'item-card';
@@ -160,12 +189,10 @@ function renderCalculateItemList(itemsToRender) {
         detailsP.textContent = `Preço NPC (Pack): ${npcPriceFormatted}`;
         infoDiv.appendChild(detailsP);
 
-        // Container para materiais (inicialmente escondido)
         const materialsPreviewContainer = document.createElement('div');
         materialsPreviewContainer.className = 'item-card-materials-preview';
-        materialsPreviewContainer.style.display = 'none'; // Escondido por padrão
+        materialsPreviewContainer.style.display = 'none';
         infoDiv.appendChild(materialsPreviewContainer);
-
 
         card.appendChild(infoDiv);
 
@@ -176,7 +203,7 @@ function renderCalculateItemList(itemsToRender) {
         calcButton.className = 'button button-primary';
         calcButton.dataset.id = item.id;
         calcButton.addEventListener('click', (e) => {
-            e.stopPropagation(); // Impede que o clique no botão acione o mouseleave do card imediatamente
+            e.stopPropagation();
             const button = e.target;
             const originalText = button.textContent;
             button.textContent = 'Carregando...';
@@ -189,7 +216,6 @@ function renderCalculateItemList(itemsToRender) {
         actionsDiv.appendChild(calcButton);
         card.appendChild(actionsDiv);
 
-        // Event listeners para hover
         card.addEventListener('mouseenter', () => {
             if (activeCardExpanded && activeCardExpanded !== card) {
                 activeCardExpanded.classList.remove('item-card-expanded');
@@ -215,7 +241,7 @@ function renderCalculateItemList(itemsToRender) {
 }
 
 function renderMaterialsPreview(container, materials, quantityProduced) {
-    container.innerHTML = ''; // Limpa previews anteriores
+    container.innerHTML = '';
     if (!materials || materials.length === 0) {
         container.innerHTML = '<p class="no-materials-text">Esta receita não possui materiais registrados.</p>';
         return;
@@ -237,11 +263,9 @@ function renderMaterialsPreview(container, materials, quantityProduced) {
     container.appendChild(list);
 }
 
-
 async function prepareAndOpenCalculateModal(itemId) {
     ui.showStatusMessage(elements.calculateStatus, `Buscando detalhes ID: ${itemId}...`, 'loading');
     try {
-        // Busca a receita completa, pois 'allItems' pode ter uma versão simplificada
         const recipeData = await api.fetchRecipe(itemId);
         if (recipeData) {
             currentRecipeData = recipeData;
@@ -269,7 +293,6 @@ function addPriceQtyPair(container, materialName, isFirstPair = false, initialQt
     priceInput.dataset.materialName = materialName;
     priceInput.value = isFirstPair ? (initialPrice || 0) : '';
 
-
     const qtyInput = document.createElement('input');
     qtyInput.type = 'number';
     qtyInput.className = 'market-qty-input';
@@ -278,11 +301,9 @@ function addPriceQtyPair(container, materialName, isFirstPair = false, initialQt
     qtyInput.dataset.materialName = materialName;
     qtyInput.value = isFirstPair ? (initialQty || 1) : '';
 
-
     pairDiv.appendChild(priceInput);
     pairDiv.appendChild(document.createTextNode(' / Lote: '));
     pairDiv.appendChild(qtyInput);
-
 
     if (!isFirstPair) {
         const removePairButton = document.createElement('button');
@@ -304,7 +325,6 @@ function addPriceQtyPair(container, materialName, isFirstPair = false, initialQt
         validateAndUpdateLotInputs(liParent);
     }
 }
-
 
 function openCalculationModal() {
     if (!currentRecipeData) { ui.showStatusMessage(elements.calculateStatus, "Dados da receita não disponíveis.", "error"); return; }
@@ -392,13 +412,12 @@ function openCalculationModal() {
     });
 
     domElements.modalSellPriceNpcBaseSpan.textContent = calculator.formatCurrency(currentRecipeData.npc_sell_price || 0);
-    domElements.modalSellPriceMarketInput.value = ''; // Limpa para novo cálculo
+    domElements.modalSellPriceMarketInput.value = '';
     updateDynamicModalValues();
     domElements.modalResultsDiv.style.display = 'none';
     ui.hideStatusMessage(elements.modalStatus);
     domElements.calculationModal.style.display = 'flex';
 }
-
 
 function closeCalculationModal() {
     if (domElements.calculationModal) { domElements.calculationModal.style.display = 'none'; }
@@ -442,8 +461,8 @@ function updateDynamicModalValues() {
 
                 if (recipeMaterial.material_type !== 'profession') {
                     const firstQtyInput = li.querySelector('.market-qty-input');
-                    if (firstQtyInput && firstQtyInput.closest('.price-qty-pair') === li.querySelector('.price-qty-pair:first-child')) { // Garante que é o primeiro par
-                        firstQtyInput.value = newTotalQuantity > 0 ? newTotalQuantity : ''; // Se for 0, deixa vazio
+                    if (firstQtyInput && firstQtyInput.closest('.price-qty-pair') === li.querySelector('.price-qty-pair:first-child')) {
+                        firstQtyInput.value = newTotalQuantity > 0 ? newTotalQuantity : '';
                     }
                     validateAndUpdateLotInputs(li);
                 } else {
@@ -458,7 +477,6 @@ function updateDynamicModalValues() {
         console.error("[updateDynamicModalValues] Erro ao atualizar lista de materiais:", error);
     }
 }
-
 
 function handleModalConfirm() {
     if (!currentRecipeData) return;
@@ -527,20 +545,20 @@ function handleModalConfirm() {
             pairs.forEach(pair => {
                 const priceInput = pair.querySelector('.market-price-input');
                 const qtyInput = pair.querySelector('.market-qty-input');
-                const price = parseFloat(priceInput?.value); // Não colocar || 0 aqui, queremos NaN se vazio/inválido
-                const qty = parseInt(qtyInput?.value, 10);    // Idem
+                const price = parseFloat(priceInput?.value);
+                const qty = parseInt(qtyInput?.value, 10);
 
-                if (qtyInput?.value.trim() === '' && priceInput?.value.trim() === '') { // Lote completamente vazio é ignorado
+                if (qtyInput?.value.trim() === '' && priceInput?.value.trim() === '') {
                     return;
                 }
                 if (isNaN(price) || price < 0 || isNaN(qty) || qty <= 0) {
                     ui.showStatusMessage(elements.modalStatus, `Dados inválidos no lote para ${materialName}: Preço=${priceInput?.value}, Qtd=${qtyInput?.value}. Verifique.`, "error");
-                    calculationError = true; return; // Interrompe este forEach, mas calculationError será pego
+                    calculationError = true; return;
                 }
                 totalCostForMaterial += price * qty;
                 totalQtyForMaterial += qty;
             });
-            if(calculationError) return; // Sai do forEach de materiais se um erro interno ocorreu
+            if(calculationError) return;
 
             const avgPrice = (totalQtyForMaterial > 0) ? totalCostForMaterial / totalQtyForMaterial : 0;
             marketPricesMaterialsAvg[materialName] = avgPrice;
@@ -567,9 +585,9 @@ function handleModalConfirm() {
 
         displayModalResults(totalCost, profitResults, desiredPacks);
 
-        if (hasWarnings && isOverallValid) { // Mostra aviso apenas se não houver erro crítico
+        if (hasWarnings && isOverallValid) {
             ui.showStatusMessage(elements.modalStatus, "Atenção: Quantidade de alguns lotes é menor que o necessário. Custo calculado com base no informado.", "info");
-        } else if (isOverallValid) { // Se tudo válido e sem warnings, limpa status
+        } else if (isOverallValid) {
             ui.hideStatusMessage(elements.modalStatus);
         }
 
@@ -617,27 +635,22 @@ function filterItems(searchTerm) {
     let filteredItemWrappers;
 
     if (!normalizedSearchTerm) {
-        // Se a pesquisa estiver vazia, mostra todos os itens, sem destaque de subitem
         filteredItemWrappers = allItems.map(item => ({ item: item, isSubItemMatch: false }));
     } else {
         filteredItemWrappers = allItems.map(item => {
-            // Verifica se o nome do item principal corresponde
             const itemNameMatch = item.name.toLowerCase().includes(normalizedSearchTerm);
-            // Verifica se algum dos materiais do item corresponde
             const subItemMatch = item.materials && item.materials.some(material =>
                 material.material_name.toLowerCase().includes(normalizedSearchTerm)
             );
 
             if (itemNameMatch) {
-                // Se o nome do item principal corresponder, ele é um match direto (não por subitem)
                 return { item: item, isSubItemMatch: false, directMatch: true };
             } else if (subItemMatch) {
-                // Se apenas um material corresponder, é um match por subitem
                 return { item: item, isSubItemMatch: true, directMatch: false };
             }
-            return null; // Não corresponde de forma alguma
-        }).filter(wrapper => wrapper !== null) // Remove os nulos
-          .sort((a, b) => { // Prioriza matches diretos
+            return null;
+        }).filter(wrapper => wrapper !== null)
+          .sort((a, b) => {
             if (a.directMatch && !b.directMatch) return -1;
             if (!a.directMatch && b.directMatch) return 1;
             return 0;

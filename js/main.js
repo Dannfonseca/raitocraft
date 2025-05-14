@@ -1,7 +1,28 @@
-// craftraito/frontend/js/main.js
-// ADICIONADO: Lógica para Dark Mode Toggle e localStorage.
-// ADICIONADO: Lógica para ocultar/mostrar header ao rolar e navegação por swipe em mobile.
-// ATUALIZADO: Navegação por swipe agora com transições animadas.
+/*
+  Arquivo: main.js
+  Descrição: Este é o arquivo principal de JavaScript para o frontend da aplicação.
+  Ele gerencia a inicialização geral da aplicação, a navegação entre as diferentes "páginas" (views),
+  o controle do tema (claro/escuro) e a interatividade do menu de navegação (incluindo o menu hambúrguer
+  para dispositivos móveis). Também implementa a funcionalidade de swipe para navegação em telas sensíveis ao toque
+  e o comportamento de ocultar/mostrar o header ao rolar a página.
+  Principais Funções:
+  - initializeApp: Ponto de entrada que configura os listeners de eventos globais e carrega a view inicial.
+  - navigateTo: Controla a transição animada entre as diferentes views (Inserir, Calcular, Editar).
+                Suporta animações de fade (para cliques) e swipe (para gestos de toque).
+  - applyTheme, toggleTheme, loadInitialTheme: Gerenciam a aplicação do tema claro/escuro e persistem
+                                               a preferência do usuário no localStorage.
+  - handleScroll: Oculta o header principal ao rolar a página para baixo e o exibe ao rolar para cima.
+  - handleTouchStart, handleTouchEnd, handleSwipeGesture: Implementam a navegação por gestos de swipe
+                                                          entre as páginas em dispositivos móveis.
+  - toggleMobileMenu: Controla a abertura e fechamento do menu de navegação mobile (hambúrguer).
+  Módulos Importados:
+  - initInsertView, initCalculateView, initEditView: Funções de inicialização para cada view específica.
+  - ui (de ui.js): Funções utilitárias para interações com a interface do usuário, como exibir mensagens de status.
+  Constantes Globais:
+  - pages: Objeto que mapeia IDs de página para seus respectivos elementos DOM.
+  - navButtons: Coleção de botões de navegação principal.
+  - Outras constantes para elementos DOM frequentemente acessados (header, container principal, etc.).
+*/
 import { initInsertView } from './views/insertView.js';
 import { initCalculateView } from './views/calculateView.js';
 import { initEditView } from './views/editView.js';
@@ -24,7 +45,7 @@ const darkModeToggleButton = document.getElementById('dark-mode-toggle');
 
 let currentView = null;
 let currentPageId = null;
-let isAnimating = false; // Flag para prevenir múltiplas animações simultâneas
+let isAnimating = false;
 
 let lastScrollTop = 0;
 const scrollDelta = 5;
@@ -96,12 +117,12 @@ function handleSwipeGesture() {
         let nextIndex;
         let direction;
 
-        if (deltaX < 0) { // Swipe para a esquerda (mostrar próximo item, que vem da direita)
+        if (deltaX < 0) {
             nextIndex = (currentIndex + 1) % mainNavButtonsArray.length;
-            direction = 'left'; // Próxima página vem da direita
-        } else { // Swipe para a direita (mostrar item anterior, que vem da esquerda)
+            direction = 'left';
+        } else {
             nextIndex = (currentIndex - 1 + mainNavButtonsArray.length) % mainNavButtonsArray.length;
-            direction = 'right'; // Página anterior vem da esquerda
+            direction = 'right';
         }
 
         const nextPageIdToNavigate = mainNavButtonsArray[nextIndex].getAttribute('data-page');
@@ -120,7 +141,7 @@ function initializeApp() {
         button.addEventListener('click', () => {
             if (isAnimating) return;
             const pageId = button.getAttribute('data-page');
-            navigateTo(pageId); // Navegação por botão não tem direção de swipe, usará fade padrão
+            navigateTo(pageId);
             if (mainNav && mainNav.classList.contains('mobile-menu-open')) {
                 toggleMobileMenu();
             }
@@ -137,9 +158,8 @@ function initializeApp() {
     }
 
     const initialPage = 'page-calculate';
-    navigateTo(initialPage, null, true); // true para isInitialLoad
+    navigateTo(initialPage, null, true);
 }
-
 
 function navigateTo(nextPageId, swipeDirection = null, isInitialLoad = false) {
     if (isAnimating && !isInitialLoad) {
@@ -148,7 +168,6 @@ function navigateTo(nextPageId, swipeDirection = null, isInitialLoad = false) {
     }
     if (currentPageId === nextPageId && !isInitialLoad) {
         console.log(`Já está na view: ${nextPageId}`);
-        // Re-inicializar a view se necessário ou apenas retornar
         if (nextPageId === 'page-edit') initEditView();
         if (nextPageId === 'page-calculate') initCalculateView();
         return;
@@ -166,29 +185,23 @@ function navigateTo(nextPageId, swipeDirection = null, isInitialLoad = false) {
         return;
     }
 
-    // Limpa classes de animação anteriores de todas as páginas
     Object.values(pages).forEach(p => {
         if(p) p.className = 'page-view';
     });
     
-    // Ativa o botão da navegação
     navButtons.forEach(button => button.classList.remove('active'));
     const activeButton = document.querySelector(`#main-nav button[data-page='${nextPageId}']`);
     if (activeButton) activeButton.classList.add('active');
 
-    // Prepara a próxima página para ser visível para animação
     nextPageElement.style.display = 'block';
-
 
     if (isInitialLoad) {
         nextPageElement.classList.add('page-active');
-        // Não há página atual para animar a saída
     } else if (currentPageElement && swipeDirection) {
-        // Animação de Swipe
-        if (swipeDirection === 'left') { // Swiped left, new page comes from right
+        if (swipeDirection === 'left') {
             currentPageElement.classList.add('page-leave-to-left');
             nextPageElement.classList.add('page-enter-from-right');
-        } else { // Swiped right, new page comes from left
+        } else {
             currentPageElement.classList.add('page-leave-to-right');
             nextPageElement.classList.add('page-enter-from-left');
         }
@@ -206,13 +219,13 @@ function navigateTo(nextPageId, swipeDirection = null, isInitialLoad = false) {
             });
         });
 
-    } else if (currentPageElement) { // Navegação por clique ou sem swipe (fade)
+    } else if (currentPageElement) {
         currentPageElement.classList.add('page-fade-out');
         nextPageElement.classList.add('page-fade-in-prepare');
         
         requestAnimationFrame(() => {
             nextPageElement.classList.add('page-animating');
-            currentPageElement.classList.add('page-animating'); // Para a transição de opacidade
+            currentPageElement.classList.add('page-animating');
              requestAnimationFrame(() => {
                 nextPageElement.classList.add('page-active');
                 currentPageElement.classList.remove('page-active');
@@ -220,18 +233,17 @@ function navigateTo(nextPageId, swipeDirection = null, isInitialLoad = false) {
         });
     }
 
-
-    const animationDuration = 300; // Deve corresponder à duração da animação no CSS
+    const animationDuration = 300;
 
     setTimeout(() => {
         if (currentPageElement && !isInitialLoad) {
             currentPageElement.style.display = 'none';
-            currentPageElement.className = 'page-view'; // Limpa classes
+            currentPageElement.className = 'page-view';
         }
-        nextPageElement.className = 'page-view page-active'; // Garante estado final
+        nextPageElement.className = 'page-view page-active';
         
         currentPageId = nextPageId;
-        currentView = nextPageId; // Mantendo currentView para compatibilidade se usado em outro lugar
+        currentView = nextPageId;
 
         try {
             switch (nextPageId) {
@@ -248,7 +260,6 @@ function navigateTo(nextPageId, swipeDirection = null, isInitialLoad = false) {
         isAnimating = false;
     }, animationDuration);
 }
-
 
 function toggleMobileMenu() {
     if (!mainNav || !hamburgerButton) return;

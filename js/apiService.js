@@ -1,13 +1,32 @@
-// Path: apiService.js
-// Modificado: JSDoc de fetchItems para refletir a inclusão de materiais.
-//const API_BASE_URL = 'http://localhost:3000/api';
-const API_BASE_URL = 'https://apiraitocraft.onrender.com/api'; // <<< ADICIONADO https:// e /api
+/*
+  Arquivo: apiService.js
+  Descrição: Este módulo é responsável por toda a comunicação com a API backend.
+  Ele abstrai as chamadas fetch e o tratamento de respostas, fornecendo funções claras
+  para realizar operações CRUD (Create, Read, Update, Delete) relacionadas aos itens e suas receitas.
+  Principais Funções:
+  - handleResponse: Função auxiliar para processar a resposta de uma chamada fetch,
+                    verificando o status e convertendo o corpo da resposta para JSON ou texto.
+  - fetchItems: Busca a lista de todos os itens craftáveis, incluindo seus materiais.
+  - fetchRecipe: Busca os detalhes de uma receita específica de um item pelo seu ID.
+  - createItem: Envia os dados de uma nova receita para o backend para criação.
+  - updateItem: Envia os dados atualizados de uma receita para o backend.
+  - deleteItem: Solicita a remoção de uma receita do backend pelo seu ID.
+  Constantes:
+  - API_BASE_URL: Define a URL base para todas as requisições à API.
+                  Agora é definida dinamicamente com base no hostname.
+*/
 
-/**
- * Função auxiliar para tratar respostas fetch
- * @param {Response} response - Objeto Response do fetch
- * @returns {Promise<any>} - Promessa que resolve com JSON ou rejeita com erro
- */
+
+let resolvedApiBaseUrl;
+if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+    resolvedApiBaseUrl = 'http://localhost:3000/api';
+} else {
+    resolvedApiBaseUrl = 'https://apiraitocraft.onrender.com/api';
+}
+const API_BASE_URL = resolvedApiBaseUrl;
+
+
+
 async function handleResponse(response) {
     const contentType = response.headers.get("content-type");
     let data;
@@ -24,12 +43,6 @@ async function handleResponse(response) {
     return data;
 }
 
-/**
- * Busca a lista de todos os itens craftáveis.
- * Cada item inclui: id, name, quantity_produced, npc_sell_price, e um array 'materials'.
- * Cada material no array inclui: material_name, quantity, material_type, default_npc_price.
- * @returns {Promise<Array<{id: number, name: string, quantity_produced: number, npc_sell_price: number, materials: Array<{material_name: string, quantity: number, material_type: string, default_npc_price: number }>}>>}
- */
 export async function fetchItems() {
     try {
         const response = await fetch(`${API_BASE_URL}/items`);
@@ -40,11 +53,6 @@ export async function fetchItems() {
     }
 }
 
-/**
- * Busca a receita detalhada de um item específico.
- * @param {number} itemId - O ID do item.
- * @returns {Promise<Object|null>} - Dados da receita ou null se não encontrado.
- */
 export async function fetchRecipe(itemId) {
     if (!itemId) return Promise.resolve(null);
     try {
@@ -59,11 +67,6 @@ export async function fetchRecipe(itemId) {
     }
 }
 
-/**
- * Cria uma nova receita no backend.
- * @param {Object} recipeData - Dados da receita (formato esperado pelo POST /api/items).
- * @returns {Promise<Object>} - Resposta do servidor (ex: { message, id }).
- */
 export async function createItem(recipeData) {
     try {
         const response = await fetch(`${API_BASE_URL}/items`, {
@@ -80,12 +83,6 @@ export async function createItem(recipeData) {
     }
 }
 
-/**
- * Atualiza uma receita existente no backend.
- * @param {number} itemId - O ID do item a ser atualizado.
- * @param {Object} recipeData - Novos dados da receita.
- * @returns {Promise<Object>} - Resposta do servidor.
- */
 export async function updateItem(itemId, recipeData) {
      if (!itemId) return Promise.reject(new Error("ID do item inválido para atualização."));
     try {
@@ -103,11 +100,6 @@ export async function updateItem(itemId, recipeData) {
     }
 }
 
-/**
- * Deleta uma receita do backend.
- * @param {number} itemId - O ID do item a ser deletado.
- * @returns {Promise<Object>} - Resposta do servidor.
- */
 export async function deleteItem(itemId) {
      if (!itemId) return Promise.reject(new Error("ID do item inválido para deleção."));
     try {

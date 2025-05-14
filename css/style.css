@@ -1,6 +1,29 @@
-/* css/style.css */
+/*
+  Arquivo: style.css
+  Descrição: Este arquivo contém todas as regras de estilo CSS para a aplicação Calculadora de Craft Pokexgames.
+  Ele define a aparência visual de todos os elementos da interface, incluindo layout, cores, fontes,
+  responsividade e temas (claro/escuro).
+  Principais Seções:
+  - Reset Básico e Configurações Globais: Normaliza estilos e define padrões para o corpo da página.
+  - Variáveis de Cor e Tema: Define paletas de cores para os temas claro e escuro, facilitando a customização e manutenção.
+  - Utilitários: Classes de ajuda como 'container'.
+  - Estilos para Transição de Página: Controla as animações ao navegar entre as diferentes seções da aplicação.
+  - Header: Estilização do cabeçalho principal e da navegação.
+  - Formulários: Aparência de labels, inputs, selects e outros elementos de formulário.
+  - Botões: Estilos globais e específicos para diferentes tipos de botões.
+  - Mensagens de Status: Formatação de mensagens de sucesso, erro, informação e carregamento.
+  - Abas de Inserção, Cálculo e Edição: Títulos e descrições de página.
+  - Container de Materiais: Layout para a entrada de materiais nos formulários.
+  - Pesquisa de Item: Estilo para campos de busca.
+  - Cards de Item: Aparência dos cards que exibem os itens nas seções de cálculo e edição, incluindo o preview de materiais.
+  - Modal Genérico: Estilos base para todas as janelas modais.
+  - Modal de Cálculo Específico: Estilos para os elementos dentro do modal de cálculo de lucro.
+  - Validação de Inputs de Lote: Estilos visuais para indicar inputs válidos, inválidos ou com aviso.
+  - Footer: Estilização do rodapé da página.
+  - Botão Dark Mode Toggle: Aparência do botão para alternar entre temas.
+  - Responsividade: Media queries para ajustar o layout e a aparência em dispositivos móveis.
+*/
 
-/* Reset Básico e Configurações Globais */
 *,
 *::before,
 *::after {
@@ -15,11 +38,10 @@ body {
     color: var(--text-color);
     background-color: var(--background-color);
     transition: background-color 0.3s, color 0.3s;
-    padding-top: 70px; /* Espaço para o header fixo */
-    overflow-x: hidden; /* Essencial para transições de swipe e previne scroll horizontal indesejado */
+    padding-top: 70px;
+    overflow-x: hidden;
 }
 
-/* Variáveis de Cor e Tema */
 :root {
     --primary-color: #007bff;
     --secondary-color: #6c757d;
@@ -50,7 +72,6 @@ body {
     --button-danger-bg: var(--danger-color);
     --button-danger-text: #ffffff;
 
-    /* Cores de destaque para pesquisa de sub-item */
     --highlight-bg-color-light: #f0f0f0;
     --highlight-border-color-light: #cccccc;
     --highlight-bg-color-dark: #3a3a3a;
@@ -58,7 +79,6 @@ body {
     --highlight-bg-color: var(--highlight-bg-color-light);
     --highlight-border-color: var(--highlight-border-color-light);
 
-    /* Cores para validação de inputs */
     --color-success: green;
     --color-success-bg: #e6ffed;
     --color-danger: red;
@@ -66,8 +86,8 @@ body {
     --color-warning: orange;
     --color-warning-bg: #fff8e6;
 
-    --background-alt-color: #f9f9f9; /* Usado em areas de custo de profissão */
-    --item-card-fixed-width: 320px; /* Largura fixa para os cards */
+    --background-alt-color: #f9f9f9;
+    --item-card-fixed-width: 320px;
 }
 
 html[data-theme="dark"] {
@@ -110,100 +130,84 @@ html[data-theme="dark"] {
     --background-alt-color: #252525;
 }
 
-/* Utilitários */
 .container {
     max-width: 960px;
     margin: 20px auto;
-    padding: 0 20px; /* Ajustado em media query para mobile */
-    position: relative; /* Necessário para o posicionamento absoluto das page-views */
-    overflow-x: hidden; /* Garante que o container contenha as transições */
-    /* A altura será definida pelo conteúdo da página ativa (.page-active com position: relative) */
+    padding: 0 20px;
+    position: relative;
+    overflow-x: hidden;
 }
 
-/* Estilos para Transição de Página */
 .page-view {
     background-color: var(--card-bg-color);
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 8px var(--card-shadow-color);
-    /* margin-bottom removido pois o posicionamento absoluto cuida disso */
-    
     width: 100%;
-    position: absolute; 
+    position: absolute;
     top: 0;
     left: 0;
-    opacity: 0; 
-    transform: translateX(100%); /* Padrão para entrada da direita */
-    display: none; 
-    visibility: hidden; 
+    opacity: 0;
+    transform: translateX(100%);
+    display: none;
+    visibility: hidden;
 }
 
 .page-view.page-animating {
-    /* Duração da transição para deslize e fade */
     transition: transform 0.3s ease-out, opacity 0.3s ease-out;
 }
 
 .page-view.page-active {
     opacity: 1;
     transform: translateX(0);
-    position: relative; /* Página ativa ocupa espaço e empurra o footer */
-    display: block; 
+    position: relative;
+    display: block;
     visibility: visible;
-    z-index: 1; 
+    z-index: 1;
 }
 
-/* Posições iniciais para entrada durante swipe */
 .page-view.page-enter-from-right {
     transform: translateX(100%);
-    opacity: 0; /* Começa transparente */
-    display: block; 
+    opacity: 0;
+    display: block;
     visibility: visible;
-    z-index: 2; /* Página que entra fica por cima da que sai */
+    z-index: 2;
 }
 .page-view.page-enter-from-left {
     transform: translateX(-100%);
-    opacity: 0; /* Começa transparente */
+    opacity: 0;
     display: block;
     visibility: visible;
     z-index: 2;
 }
 
-/* Posições finais para saída durante swipe (aplicadas pela JS para iniciar animação) */
-/* A classe .page-active é removida e a nova de transformação é aplicada */
 .page-view.page-leave-to-left {
-    transform: translateX(-100%); /* Desliza para a esquerda */
-    opacity: 0; /* Desaparece */
-    z-index: 1; /* Fica atrás da página que entra */
+    transform: translateX(-100%);
+    opacity: 0;
+    z-index: 1;
 }
 .page-view.page-leave-to-right {
-    transform: translateX(100%); /* Desliza para a direita */
-    opacity: 0; /* Desaparece */
+    transform: translateX(100%);
+    opacity: 0;
     z-index: 1;
 }
 
-/* Transições de Fade para navegação por clique (sem swipe) */
 .page-view.page-fade-out {
-    /* Apenas controla a opacidade, transform já está em 0 (ou será para a página que sai) */
-    opacity: 0 !important; /* Força o fade out */
-    /* A transição é aplicada pela classe page-animating */
+    opacity: 0 !important;
     z-index: 1;
 }
 .page-view.page-fade-in-prepare {
     opacity: 0;
-    transform: translateX(0); /* Garante que está no centro, mas invisível */
+    transform: translateX(0);
     display: block;
     visibility: visible;
     z-index: 2;
 }
-/* A classe .page-active combinada com .page-animating fará o fade-in */
-
 
 .page-view:empty {
-    display: none !important; /* Mantém esta regra */
+    display: none !important;
 }
 
-
-/* Header */
 .main-header {
     background-color: var(--primary-color);
     color: var(--button-primary-text);
@@ -212,15 +216,14 @@ html[data-theme="dark"] {
     top: 0;
     left: 0;
     width: 100%;
-    z-index: 1000; /* Header sempre acima das páginas durante transição */
+    z-index: 1000;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease-out; /* Transição para ocultar/mostrar */
+    transition: transform 0.3s ease-out;
 }
 
 .main-header.header-hidden {
     transform: translateY(-100%);
 }
-
 
 .header-content {
     display: flex;
@@ -235,7 +238,6 @@ html[data-theme="dark"] {
     margin: 0;
 }
 
-/* Navegação Principal */
 .main-navigation button {
     background-color: transparent;
     color: var(--button-primary-text);
@@ -253,7 +255,6 @@ html[data-theme="dark"] {
     background-color: rgba(255, 255, 255, 0.2);
 }
 
-/* Botão Hambúrguer */
 #hamburger-button {
     display: none;
     background: none;
@@ -283,8 +284,6 @@ html[data-theme="dark"] {
     transform: translateY(-8px) rotate(-45deg);
 }
 
-
-/* Formulários */
 .form-group {
     margin-bottom: 15px;
 }
@@ -340,7 +339,6 @@ hr {
     margin: 20px 0;
 }
 
-/* Botões */
 .button, button {
     padding: 10px 15px;
     font-size: 1em;
@@ -392,8 +390,6 @@ button:disabled {
     margin-top: 5px;
 }
 
-
-/* Mensagens de Status */
 .status-message {
     padding: 10px;
     margin-top: 15px;
@@ -420,7 +416,6 @@ button:disabled {
     color: #212529;
 }
 
-/* Abas de Inserção, Cálculo e Edição */
 .page-title {
     margin-bottom: 20px;
     color: var(--text-color-emphasis);
@@ -430,7 +425,6 @@ button:disabled {
     color: var(--text-color-secondary);
 }
 
-/* Container de Materiais (Formulário de Inserção/Edição) */
 .materials-container-grid {
     display: grid;
     gap: 15px;
@@ -465,7 +459,6 @@ button:disabled {
 .npc-price-field-container {
 }
 
-/* Pesquisa de Item */
 .search-container {
     margin-bottom: 20px;
     display: flex;
@@ -486,14 +479,11 @@ button:disabled {
     color: var(--text-color);
 }
 
-/* Cards de Item (para Cálculo e Edição) */
 .item-card-container {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(var(--item-card-fixed-width), 1fr));
     gap: 20px;
     justify-content: center;
-    /* A página ativa (.page-active) é position:relative e define a altura do container,
-       permitindo que o footer seja empurrado corretamente. */
 }
 
 .loading-text, .info-text {
@@ -524,7 +514,7 @@ button:disabled {
 .item-card-expanded {
     padding-bottom: 10px;
     box-shadow: 0 4px 12px var(--card-shadow-color-expanded);
-    z-index: 10; /* Para sobrepor outros cards ao expandir */
+    z-index: 10;
     border-left-width: 5px;
 }
 html[data-theme="dark"] .item-card-expanded {
@@ -559,8 +549,6 @@ html[data-theme="dark"] .item-card-expanded {
     max-width: 200px;
 }
 
-
-/* Preview de Materiais no Card (Hover) */
 .item-card-materials-preview {
     margin-top: 10px;
     padding-top: 10px;
@@ -595,11 +583,10 @@ html[data-theme="dark"] .item-card-expanded {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Modal Genérico */
 .modal {
     display: none;
     position: fixed;
-    z-index: 1050; /* Acima do header e de outros elementos */
+    z-index: 1050;
     left: 0;
     top: 0;
     width: 100%;
@@ -625,14 +612,12 @@ html[data-theme="dark"] .item-card-expanded {
     overflow: hidden;
 }
 
-/* Conteúdo rolável dentro do modal */
 .modal-body-scrollable {
     overflow-y: auto;
     flex-grow: 1;
     padding-right: 15px;
     margin-right: -15px;
 }
-
 
 .close-button {
     color: var(--text-color-secondary);
@@ -658,7 +643,6 @@ html[data-theme="dark"] .item-card-expanded {
     padding-right: 15px;
 }
 
-/* Modal de Cálculo Específico */
 #modal-materials-list {
     list-style: none;
     padding: 0;
@@ -756,7 +740,6 @@ html[data-theme="dark"] .profession-cost-input {
     color: var(--text-color-secondary);
 }
 
-/* Modal de Edição e seus botões de ação */
 #edit-form-container {
     margin-top: 20px;
     padding: 20px;
@@ -777,14 +760,12 @@ html[data-theme="dark"] .profession-cost-input {
 }
 #calculation-modal .modal-confirm-btn {
     margin-top: 15px;
-    width: calc(100% - 15px); /* Considera o padding-right do modal-body-scrollable */
+    width: calc(100% - 15px);
     margin-left: auto;
     margin-right: auto;
     display: block;
 }
 
-
-/* Validação de Inputs de Lote (Modal de Cálculo) */
 .input-valid {
   border-color: var(--color-success) !important;
   background-color: var(--color-success-bg) !important;
@@ -800,24 +781,21 @@ html[data-theme="dark"] .profession-cost-input {
 html[data-theme="dark"] .input-valid,
 html[data-theme="dark"] .input-invalid,
 html[data-theme="dark"] .input-warning {
-    color: var(--text-color); /* Garante legibilidade do texto no dark mode */
+    color: var(--text-color);
 }
 
-
-/* Footer */
 .main-footer {
     text-align: center;
     padding: 20px;
-    margin-top: 30px; /* Ajustado se necessário pelo conteúdo do .page-active */
+    margin-top: 30px;
     background-color: var(--card-bg-color);
     border-top: 1px solid var(--border-color);
     color: var(--text-color-secondary);
     font-size: 0.9em;
-    position: relative; /* Para garantir que fique abaixo do conteúdo das páginas */
-    z-index: 0; /* Abaixo das páginas e do header */
+    position: relative;
+    z-index: 0;
 }
 
-/* Botão Dark Mode Toggle */
 #dark-mode-toggle {
     position: fixed;
     bottom: 20px;
@@ -834,15 +812,13 @@ html[data-theme="dark"] .input-warning {
     font-size: 1.2em;
     cursor: pointer;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    z-index: 1000; /* Mesmo z-index do header para consistência */
+    z-index: 1000;
 }
 
-
-/* Responsividade */
 @media (max-width: 768px) {
     body {
-        padding-top: 56px; /* Altura do header mobile */
-        overflow-x: hidden; /* Reitera para segurança */
+        padding-top: 56px;
+        overflow-x: hidden;
     }
     .main-header h1 {
         font-size: 1.1em;
@@ -853,7 +829,7 @@ html[data-theme="dark"] .input-warning {
         width: 100%;
         background-color: var(--primary-color);
         position: absolute;
-        top: 56px; /* Altura do header em mobile */
+        top: 56px;
         left: 0;
         padding: 10px 0;
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
@@ -877,37 +853,32 @@ html[data-theme="dark"] .input-warning {
     }
 
     .container {
-        padding: 0 10px; /* Menor padding lateral em mobile */
-        /* O container principal precisa ser capaz de conter as page-views que estão position: absolute */
+        padding: 0 10px;
     }
 
-    /* As page-views já são position: absolute e têm width: 100% */
-    /* Elas vão se ajustar ao padding do .container */
     .page-view {
-        padding: 15px; /* Ajusta padding interno das views em mobile */
-        /* margin-bottom não se aplica devido ao position: absolute */
+        padding: 15px;
     }
-
 
     .item-card-container {
-        grid-template-columns: 1fr; /* Uma coluna em mobile */
+        grid-template-columns: 1fr;
     }
     .item-card {
-        width: auto; /* Ocupa a largura da coluna do grid */
-        max-width: none; /* Remove qualquer max-width anterior se houver */
+        width: auto;
+        max-width: none;
     }
 
     .material-entry {
         grid-template-columns: 1fr;
     }
     .remove-material-button {
-        grid-column: 1; /* Volta para uma coluna */
+        grid-column: 1;
     }
 
     .modal-content {
         width: 95%;
         padding: 20px;
-        max-height: calc(100vh - 20px); /* Menor margem para viewport */
+        max-height: calc(100vh - 20px);
     }
     .modal-body-scrollable {
         padding-right: 5px;
@@ -916,9 +887,9 @@ html[data-theme="dark"] .input-warning {
     .modal-title,
     .modal-results-area,
     .modal-content > .form-actions {
-        padding-right: 5px; /* Ajuste para o scrollbar menor */
+        padding-right: 5px;
     }
     #calculation-modal .modal-confirm-btn {
-        width: calc(100% - 5px); /* Ajuste para o padding */
+        width: calc(100% - 5px);
     }
 }

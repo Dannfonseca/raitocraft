@@ -1,5 +1,30 @@
-// views/editView.js
-// Modificado: Implementada pesquisa de sub-itens.
+/*
+  Arquivo: editView.js
+  Descrição: Este módulo é responsável pela funcionalidade da "Página de Gerenciamento de Itens".
+  Ele permite aos usuários visualizar, pesquisar, editar e deletar receitas de itens existentes.
+  As edições são realizadas através de um modal que é preenchido com os dados do item selecionado.
+  Principais Funções:
+  - initEditView: Inicializa a view, busca elementos DOM e configura listeners para pesquisa,
+                  botões de editar/deletar nos cards e para os controles do modal de edição.
+  - loadItemsForEditing: Busca todos os itens (com seus materiais) da API e dispara a renderização
+                         ou filtragem da lista de itens.
+  - renderEditItemList: Cria e exibe os cards dos itens na página. Cada card possui botões para
+                        editar ou deletar a respectiva receita. Destaca cards se a pesquisa
+                        corresponder a um de seus materiais.
+  - filterItemsForEditing: Filtra a lista de itens com base no termo de pesquisa, priorizando
+                           correspondências diretas no nome do item.
+  - openEditModal: Busca os dados detalhados do item selecionado (para garantir a versão mais recente)
+                   e preenche o formulário no modal de edição com esses dados.
+  - closeEditModal: Fecha o modal de edição e reseta seu formulário.
+  - handleUpdateItem: Coleta os dados do formulário do modal de edição, valida-os e envia uma
+                      requisição de atualização para a API. Recarrega a lista de itens após o sucesso.
+  - handleDeleteItem: Solicita confirmação do usuário e, se confirmado, envia uma requisição
+                      de deleção para a API. Recarrega a lista de itens após o sucesso.
+  Módulos Importados:
+  - api (apiService.js): Para interagir com o backend (buscar, atualizar, deletar itens).
+  - ui (ui.js): Para funções utilitárias da UI, como exibir mensagens de status e
+                manipular os campos de entrada de materiais no modal.
+*/
 import * as api from '../apiService.js';
 import * as ui from '../ui.js';
 
@@ -7,10 +32,9 @@ const elements = {
     editItemList: 'edit-item-list',
     editLoadingMsg: 'edit-loading-message',
     editStatus: 'edit-status',
-    editFormContainer: 'edit-form-container', // Para o formulário de edição inline/modal
-    editItemSearch: 'edit-item-search', // Input de pesquisa
+    editFormContainer: 'edit-form-container',
+    editItemSearch: 'edit-item-search',
 
-    // Modal de Edição (se você estiver usando o modal fornecido anteriormente)
     editModal: 'edit-item-modal',
     editModalCloseButton: 'edit-modal-close-button',
     editModalForm: 'edit-modal-form',
@@ -26,7 +50,7 @@ const elements = {
 };
 
 let domElements = {};
-let allItemsWithMaterials = []; // Para armazenar todos os itens com seus materiais
+let allItemsWithMaterials = [];
 let currentEditingItemId = null;
 
 export function initEditView() {
@@ -36,19 +60,17 @@ export function initEditView() {
     });
 
     const missingElement = Object.keys(elements).find(key => !domElements[key]);
-    if (missingElement && elements[missingElement] !== null) { // Checa se o ID esperado não é null
+    if (missingElement && elements[missingElement] !== null) {
         console.error(`[editView] ERRO FATAL: Elemento não encontrado: #${elements[missingElement]}`);
         if(domElements.editStatus) ui.showStatusMessage(elements.editStatus, `Erro: Falha ao carregar UI de edição (${elements[missingElement]}).`, "error");
         return;
     }
     console.log("[editView] Todos elementos essenciais encontrados.");
 
-
     if (domElements.editItemSearch) {
         domElements.editItemSearch.addEventListener('input', () => filterItemsForEditing(domElements.editItemSearch.value));
     }
 
-    // Configurar listeners do modal de edição
     if (domElements.editModalCloseButton) {
         domElements.editModalCloseButton.addEventListener('click', closeEditModal);
     }
@@ -73,11 +95,11 @@ async function loadItemsForEditing() {
     if (domElements.editLoadingMsg) domElements.editLoadingMsg.style.display = 'block';
     if (domElements.editItemList) domElements.editItemList.innerHTML = '';
     ui.hideStatusMessage(elements.editStatus);
-    closeEditModal(); // Garante que o modal esteja fechado ao recarregar
+    closeEditModal();
 
     try {
-        allItemsWithMaterials = await api.fetchItems(); // fetchItems agora retorna materiais
-        filterItemsForEditing(domElements.editItemSearch ? domElements.editItemSearch.value : ''); // Filtra com o termo atual, se houver
+        allItemsWithMaterials = await api.fetchItems();
+        filterItemsForEditing(domElements.editItemSearch ? domElements.editItemSearch.value : '');
 
         if (domElements.editLoadingMsg) domElements.editLoadingMsg.style.display = 'none';
         if (!allItemsWithMaterials || allItemsWithMaterials.length === 0) {
@@ -99,7 +121,6 @@ function renderEditItemList(itemsToRender) {
          if (domElements.editItemSearch && domElements.editItemSearch.value) {
             container.innerHTML = '<p class="info-text">Nenhum item encontrado com o termo pesquisado.</p>';
         }
-        // A mensagem "Nenhum item registrado" é tratada em loadItemsForEditing
         return;
     }
 
@@ -108,7 +129,7 @@ function renderEditItemList(itemsToRender) {
         const isSubItemMatch = itemWrapper.isSubItemMatch;
 
         const card = document.createElement('div');
-        card.className = 'item-card item-card-edit'; // Classe adicional para estilização específica se necessário
+        card.className = 'item-card item-card-edit';
          if (isSubItemMatch) {
             card.classList.add('highlight-contains-searched-material');
         }
@@ -187,8 +208,6 @@ async function openEditModal(itemId) {
     domElements.editModal.style.display = 'flex';
 
     try {
-        // Busca a receita completa para garantir dados atualizados, incluindo materiais.
-        // Mesmo que allItemsWithMaterials já os tenha, uma busca individual garante a versão mais recente.
         const itemData = await api.fetchRecipe(itemId);
 
         if (!itemData) {
@@ -205,13 +224,12 @@ async function openEditModal(itemId) {
         if (domElements.editModalNpcSellPriceInput) domElements.editModalNpcSellPriceInput.value = itemData.npc_sell_price || 0;
 
         if (domElements.editModalMaterialsContainer) {
-            domElements.editModalMaterialsContainer.innerHTML = ''; // Limpa materiais antigos
+            domElements.editModalMaterialsContainer.innerHTML = '';
             if (itemData.materials && itemData.materials.length > 0) {
                 itemData.materials.forEach(material => {
                     ui.addMaterialInput(domElements.editModalMaterialsContainer, material);
                 });
             } else {
-                // Adiciona um campo de material em branco se não houver nenhum
                 ui.addMaterialInput(domElements.editModalMaterialsContainer);
             }
         }
@@ -244,7 +262,7 @@ async function handleUpdateItem(event) {
         ui.showStatusMessage(elements.editModalStatus, "Nome e quantidade produzida são obrigatórios e válidos.", "error");
         return;
     }
-    if (!materials) { // getMaterialsData retorna null se houver erro de validação interna
+    if (!materials) {
         ui.showStatusMessage(elements.editModalStatus, "Verifique os dados dos materiais. Campos obrigatórios devem ser preenchidos corretamente.", "error");
         return;
     }
@@ -252,7 +270,6 @@ async function handleUpdateItem(event) {
         ui.showStatusMessage(elements.editModalStatus, "Ao menos um material é necessário para a receita.", "error");
         return;
     }
-
 
     const updatedData = {
         name,
@@ -266,8 +283,8 @@ async function handleUpdateItem(event) {
     try {
         await api.updateItem(currentEditingItemId, updatedData);
         ui.showStatusMessage(elements.editModalStatus, "Item atualizado com sucesso!", "success");
-        loadItemsForEditing(); // Recarrega a lista
-        setTimeout(closeEditModal, 1500); // Fecha o modal após sucesso
+        loadItemsForEditing();
+        setTimeout(closeEditModal, 1500);
     } catch (error) {
         console.error("Erro ao atualizar item:", error);
         ui.showStatusMessage(elements.editModalStatus, `Erro ao salvar: ${error.message}`, "error");
@@ -275,7 +292,6 @@ async function handleUpdateItem(event) {
 }
 
 async function handleDeleteItem(itemId, itemName) {
-    // Usar um confirm mais robusto ou um modal de confirmação em uma aplicação real.
     if (!confirm(`Tem certeza que deseja deletar o item "${itemName}" (ID: ${itemId})? Esta ação não pode ser desfeita.`)) {
         return;
     }
@@ -284,7 +300,7 @@ async function handleDeleteItem(itemId, itemName) {
     try {
         await api.deleteItem(itemId);
         ui.showStatusMessage(elements.editStatus, `"${itemName}" deletado com sucesso!`, "success");
-        loadItemsForEditing(); // Recarrega a lista
+        loadItemsForEditing();
     } catch (error) {
         console.error(`Erro ao deletar item ${itemId}:`, error);
         ui.showStatusMessage(elements.editStatus, `Erro ao deletar "${itemName}": ${error.message}`, "error");
